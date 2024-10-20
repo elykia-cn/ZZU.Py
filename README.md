@@ -23,7 +23,6 @@ def this_monday():
     return datetime.datetime.strftime(today - datetime.timedelta(today.weekday()), "%Y-%m-%d")
 
 
-print(this_monday())
 # 设置为 True 以避免触发“建议设置设备参数”的警告。如果有能力，你也可以通过 setDeviceParams() 设置设备参数
 me = ZZUPy(True)
 # me.setDeviceParams()
