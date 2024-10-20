@@ -7,6 +7,9 @@
 pip install zzupy --upgrade
 ```
 
+## Done & To Do
+See [ZZU.Py Completion Plan](https://github.com/users/Illustar0/projects/1) for details
+
 ## Use
 
 Web documentation is not available at this time, please use PyCharm for a better in-development documentation experience.
