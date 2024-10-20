@@ -1,0 +1,21 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+[project]
+name = "zzupy"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.8"
+description = "ZZU.Py is a Python library for interacting with the Zhengzhou University (ZZU) Supwisdom Course Management Information System API."
+authors = [
+    { name="Illustar0", email="me@illustar0.com" },
+]
+classifiers = [
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+]
+dependencies = [
+    "httpx",
+    "rich",
+]
+[project.urls]
+Source = "https://github.com/Illustar0/ZZU.Py"
