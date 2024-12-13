@@ -57,7 +57,7 @@ def sm4_decrypt_ecb(ciphertext: bytes, key: bytes):
     block_size = 16
     decrypted_padded = b""
     for i in range(0, len(ciphertext), block_size):
-        block = ciphertext[i:i + block_size]
+        block = ciphertext[i : i + block_size]
         decrypted_padded += sm4.decrypt(block)
     decrypted = unpad(decrypted_padded, block_size)
     return decrypted.decode()

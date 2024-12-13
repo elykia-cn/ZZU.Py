@@ -34,6 +34,7 @@ Man, what can I say?
 def get_sign(dynamicSecret, params):
     """
     获取sign值
+    
     :param str dynamicSecret: 来自 login-token 请求
     :param str params: URL请求参数
     :return: sign值

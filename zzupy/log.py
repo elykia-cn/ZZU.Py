@@ -1,5 +1,6 @@
 import sys
 import loguru
+
 logger = loguru.logger
 
 
@@ -20,4 +21,3 @@ logger_id = logger.add(
     filter="WARNING",
     format=default_format,
 )
-

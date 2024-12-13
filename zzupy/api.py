@@ -12,8 +12,9 @@ from zzupy.supwisdom import Supwisdom
 from zzupy.ecard import eCard
 from zzupy.network import Network
 
+
 class ZZUPy:
-    def __init__(self, usercode: str,password: str,log: bool=False):
+    def __init__(self, usercode: str, password: str, log: bool = False):
         """
         初始化一个 ZZUPy 对象
         :param usercode: 学号
@@ -29,7 +30,7 @@ class ZZUPy:
         self._refreshToken = None
         self._name = None
         self._isLogged = False
-        self._logEnabled =log
+        self._logEnabled = log
         self._DeviceParams = {}
         self._DeviceParams["deviceName"] = ""
         self._DeviceParams["deviceId"] = ""
@@ -37,7 +38,7 @@ class ZZUPy:
         self._DeviceParams["deviceInfos"] = ""
         self._DeviceParams["userAgentPrecursor"] = ""
         self._userCode = usercode
-        self._password=password
+        self._password = password
         # 初始化类
         self.Network = Network(self)
         self.eCard = eCard(self)
@@ -53,9 +54,15 @@ class ZZUPy:
 
     def _set_params_from_login_token(self, res: str):
         try:
-            self._dynamicSecret = json.loads(base64.b64decode(json.loads(res)["business_data"]))["secret"]
-            self._dynamicToken = json.loads(base64.b64decode(json.loads(res)["business_data"]))["token"]
-            self._name = json.loads(base64.b64decode(json.loads(res)["business_data"]))["user_info"]["user_name"]
+            self._dynamicSecret = json.loads(
+                base64.b64decode(json.loads(res)["business_data"])
+            )["secret"]
+            self._dynamicToken = json.loads(
+                base64.b64decode(json.loads(res)["business_data"])
+            )["token"]
+            self._name = json.loads(base64.b64decode(json.loads(res)["business_data"]))[
+                "user_info"
+            ]["user_name"]
         except:
             logger.error("LoginFailed")
 
@@ -75,12 +82,21 @@ class ZZUPy:
         self._DeviceParams["deviceInfos"] = _kget(kwargs, "deviceInfos", "")
         self._DeviceParams["userAgentPrecursor"] = _kget(kwargs, "deviceInfos", "")
         if self._DeviceParams["userAgentPrecursor"].endswith(" "):
-            self._DeviceParams["userAgentPrecursor"] = self._DeviceParams["userAgentPrecursor"]
+            self._DeviceParams["userAgentPrecursor"] = self._DeviceParams[
+                "userAgentPrecursor"
+            ]
         else:
-            self._DeviceParams["userAgentPrecursor"] = self._DeviceParams["userAgentPrecursor"] + " "
+            self._DeviceParams["userAgentPrecursor"] = (
+                self._DeviceParams["userAgentPrecursor"] + " "
+            )
         # self.DeviceParamsSet = True
 
-    def login(self, appVersion: str="SWSuperApp/1.0.33",appId: str="com.supwisdom.zzu", osType: str="android")-> tuple:
+    def login(
+        self,
+        appVersion: str = "SWSuperApp/1.0.33",
+        appId: str = "com.supwisdom.zzu",
+        osType: str = "android",
+    ) -> tuple:
         """
         通过学号和密码登录
 
@@ -93,9 +109,9 @@ class ZZUPy:
         :rtype: tuple
         """
         headers = {
-            'User-Agent': f'{appVersion}({self._DeviceParams["deviceName"]})',
-            'Connection': 'Keep-Alive',
-            'Accept-Encoding': 'gzip',
+            "User-Agent": f'{appVersion}({self._DeviceParams["deviceName"]})',
+            "Connection": "Keep-Alive",
+            "Accept-Encoding": "gzip",
         }
         response = httpx.post(
             f'https://token.s.zzu.edu.cn/password/passwordLogin?username={self._userCode}&password={self._password}&appId={appId}&geo&deviceId={self._DeviceParams["deviceId"]}&osType={osType}&clientId&mfaState',
@@ -103,33 +119,33 @@ class ZZUPy:
         )
         self._set_params_from_password_login(response.text)
         cookies = {
-            'userToken': self._userToken,
-            'Domain': '.zzu.edu.cn',
-            'Path': '/',
-            'SVRNAME': 'ws1',
+            "userToken": self._userToken,
+            "Domain": ".zzu.edu.cn",
+            "Path": "/",
+            "SVRNAME": "ws1",
         }
 
         headers = {
-            'User-Agent': self._DeviceParams["userAgentPrecursor"] + "SuperApp",
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Android WebView";v="126"',
-            'sec-ch-ua-mobile': '?1',
-            'sec-ch-ua-platform': '"Android"',
-            'Origin': 'https://jw.v.zzu.edu.cn',
-            'X-Requested-With': 'com.supwisdom.zzu',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Dest': 'empty',
-            'Referer': 'https://jw.v.zzu.edu.cn/app-web/',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Cookie': f'userToken={self._userToken}; Domain=.zzu.edu.cn; Path=/; SVRNAME=ws1',
+            "User-Agent": self._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "sec-ch-ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Android WebView";v="126"',
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": '"Android"',
+            "Origin": "https://jw.v.zzu.edu.cn",
+            "X-Requested-With": "com.supwisdom.zzu",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
+            "Referer": "https://jw.v.zzu.edu.cn/app-web/",
+            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cookie": f"userToken={self._userToken}; Domain=.zzu.edu.cn; Path=/; SVRNAME=ws1",
         }
         data = {
-            'random': int(random.uniform(10000, 99999)),
-            'timestamp': int(round(time.time() * 1000)),
-            'userToken': self._userToken
+            "random": int(random.uniform(10000, 99999)),
+            "timestamp": int(round(time.time() * 1000)),
+            "userToken": self._userToken,
         }
         # 计算 sign 并将其加入 data
         params = ""
@@ -140,7 +156,7 @@ class ZZUPy:
         data["sign"] = sign
 
         response = httpx.post(
-            'https://jw.v.zzu.edu.cn/app-ws/ws/app-service/super/app/login-token',
+            "https://jw.v.zzu.edu.cn/app-ws/ws/app-service/super/app/login-token",
             cookies=cookies,
             headers=headers,
             data=data,
