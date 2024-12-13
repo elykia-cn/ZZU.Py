@@ -1,2 +1,7 @@
+fake_useragent
+gmalg
 httpx
-rich
+loguru
+psutil
+pycryptodome
+typing_extensions

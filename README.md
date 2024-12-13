@@ -1,41 +1,42 @@
 # ZZU.Py
-<font color=gray size=3>a Python library for interacting with the Zhengzhou University (ZZU) Supwisdom Course Management Information System API.</font>
+<font color=gray size=3>郑州大学移动校园的 Python API 包装</font>
 
-## Install
+## 安装
 
 ```shell
 pip install zzupy --upgrade
 ```
 
 ## Done & To Do
-See [ZZU.Py Completion Plan](https://github.com/users/Illustar0/projects/1) for details
+- [x] Supwisdom
+  - [x] 获取课表
+- [x] Network
+  - [x] 校园网认证
+- [x] eCard
+  - [x] 充值电费 
+  - [x] 获取校园卡余额
+  - [x] 获取剩余电费
 
-## Use
+前往 [ZZU.Py Completion Plan](https://github.com/users/Illustar0/projects/1) 查看 To Do
 
-Web documentation is not available at this time, please use PyCharm for a better in-development documentation experience.
+## 文档
+
+[文档](https://illustar0.github.io/ZZU.Py/)仍在 In Progress ，建议使用 PyCharm 来获得最佳的开发中文档体验
+
 
 ## Example
 
 ```Py
-from zzupy import *
-import datetime
+from zzupy import ZZUPy
 
-
-def this_monday():
-    today = datetime.datetime.strptime(str(datetime.datetime.now().strftime('%Y-%m-%d')), "%Y-%m-%d")
-    return datetime.datetime.strftime(today - datetime.timedelta(today.weekday()), "%Y-%m-%d")
-
-
-# 设置为 True 以避免触发“建议设置设备参数”的警告。如果有能力，你也可以通过 setDeviceParams() 设置设备参数
-me = ZZUPy(True)
-# me.setDeviceParams()
-info = me.loginByPassword("fakeusercode", "fakepassword")
+me = ZZUPy("usercode","password")
+info = me.login()
 print(f"{info[0]} {info[1]} 登录成功")
-print("校园卡余额：", str(me.getBalance()))
-print("剩余照明电费：", str(me.getRemainingPower("yourroomid")))
-print("课表JSON：", me.getCoursesJson(this_monday()))
+print("校园卡余额：", str(me.eCard.get_balance()))
+print("剩余电费：", str(me.eCard.get_remaining_power("roomid")))
+print("课表JSON：", me.Supwisdom.get_courses_json("2024-12-09"))
 ```
 
-## License
+## 许可
 
 License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)
