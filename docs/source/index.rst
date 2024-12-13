@@ -6,7 +6,7 @@
 ZZU.Py 文档
 ====================
 
-郑州大学移动校园的 Python API 包装
+郑州大学移动校园的 Python API 封装
 
 
 .. toctree::
