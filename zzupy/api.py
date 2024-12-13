@@ -17,12 +17,10 @@ class ZZUPy:
     def __init__(self, usercode: str, password: str, log: bool = False):
         """
         初始化一个 ZZUPy 对象
-        :param usercode: 学号
-        :type usercode: str
-        :param password: 密码
-        :type password: str
-        :param log: 是否启用日志
-        :type log: bool
+
+        :param str usercode: 学号
+        :param str password: 密码
+        :param bool log: 是否启用日志
         """
         self._userToken = None
         self._dynamicSecret = "supwisdom_eams_app_secret"

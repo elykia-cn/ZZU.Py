@@ -14,7 +14,7 @@ project = 'ZZU.Py'
 copyright = '2024, Illustar0'
 author = 'Illustar0'
 release = '0.2.0'
-
+autoclass_content = 'both'
 
 
 # -- General configuration ---------------------------------------------------
