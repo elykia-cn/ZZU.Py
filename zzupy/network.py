@@ -1,9 +1,12 @@
 import base64
 import random
 import httpx
+import re
+import json
 from fake_useragent import UserAgent
+from typing_extensions import Tuple
 
-from zzupy.utils import get_ip_by_interface
+from zzupy.utils import get_ip_by_interface, get_default_interface
 
 
 class Network:
@@ -11,25 +14,28 @@ class Network:
         self._parent = parent
 
     def portal_auth(
-        self, interface: str = "", baseurl="http://10.2.7.8:801", ua=UserAgent()
-    ):
+        self,
+        interface: str = get_default_interface(),
+        baseurl="http://10.2.7.8:801",
+        ua=UserAgent().random,
+    ) -> Tuple[str, bool, str]:
         """
         进行校园网认证
 
         :param str interface: 网络接口名
         :param str baseurl: PortalAuth Server URL。一般无需修改
         :param str ua: User-Agent
+        :returns: 元组:
+            - interface: 本次认证调用的网络接口。
+            - success: 认证是否成功。(不可信，有时失败仍可正常上网)
+            - msg: 服务端返回信息。
+        :rtype: Tuple[str,bool,str]
         """
-        if interface == "":
-            local_client = httpx.Client()
-        else:
-            transport = httpx.HTTPTransport(
-                local_address=get_ip_by_interface(interface)
-            )
-            local_client = httpx.Client(transport=transport)
+        transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
+        local_client = httpx.Client(transport=transport)
         self._chkstatus(local_client, baseurl, ua)
         self._loadConfig(local_client, interface, baseurl, ua)
-        self._auth(local_client, interface, baseurl, ua)
+        return self._auth(local_client, interface, baseurl, ua)
 
     def _auth(
         self,
@@ -48,7 +54,7 @@ class Network:
         params = [
             ("callback", "dr1003"),
             ("login_method", "1"),
-            ("user_account", f",0,{self._parent.userCode}"),
+            ("user_account", f",0,{self._parent._userCode}"),
             (
                 "user_password",
                 base64.b64encode(self._parent._password.encode()).decode(),
@@ -67,8 +73,14 @@ class Network:
         response = client.get(
             f"{baseURL}/eportal/portal/login", params=params, headers=headers
         )
-        return interface, response.text
+        res_json = json.loads(re.findall(r"dr1003\((.*?)\);", response.text)[0])
+        if res_json["result"] == 0:
+            success = False
+        else:
+            success = True
+        return interface, success, res_json["msg"]
 
+    # 现在发现可有可无好像
     def _chkstatus(self, client, baseURL, ua):
         headers = {
             "Accept": "*/*",
@@ -84,7 +96,11 @@ class Network:
             "v": str(random.randint(500, 10499)),
             "lang": "zh",
         }
-        client.get(f"{baseURL}/drcom/chkstatus", params=params, headers=headers)
+        client.get(
+            f"{re.sub(r':\d+', '', baseURL)}/drcom/chkstatus",
+            params=params,
+            headers=headers,
+        )
 
     def _loadConfig(self, client, interface, baseURL, ua):
         headers = {

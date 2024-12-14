@@ -3,7 +3,7 @@ import httpx
 import json
 import base64
 import time
-from typing_extensions import Unpack
+from typing_extensions import Unpack, Tuple
 
 from zzupy.log import logger
 from zzupy.typing import DeviceParams
@@ -94,7 +94,7 @@ class ZZUPy:
         appVersion: str = "SWSuperApp/1.0.33",
         appId: str = "com.supwisdom.zzu",
         osType: str = "android",
-    ) -> tuple:
+    ) -> Tuple[str, str]:
         """
         通过学号和密码登录
 
@@ -103,8 +103,10 @@ class ZZUPy:
         :param str appVersion: APP 版本 ，一般类似 "SWSuperApp/1.0.33" ，可自行更新版本号，但详细数据需要抓包获取,位于 "passwordLogin" 请求的 User-Agent 中，也可随便填或空着，目前没有观察到相关风控机制。
         :param str appId: APP 包名，一般不需要修改
         :param str osType: 系统类型，一般不需要修改
-        :return: (usercode,name) 由学号和姓名组成的元组
-        :rtype: tuple
+        :returns: 元组:
+            - usercode: 学号
+            - name: 姓名
+        :rtype: Tuple[str,str]
         """
         headers = {
             "User-Agent": f'{appVersion}({self._DeviceParams["deviceName"]})',

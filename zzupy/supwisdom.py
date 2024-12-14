@@ -12,7 +12,7 @@ class Supwisdom:
     def __init__(self, parent):
         self._parent = parent
 
-    def getCoursesJson(self, start_date):
+    def getCoursesJson(self, start_date: str) -> str:
         """
         获取课程表
 

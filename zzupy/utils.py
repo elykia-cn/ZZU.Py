@@ -44,6 +44,17 @@ def get_ip_by_interface(interface):
     return None
 
 
+def get_default_interface():
+    net_if_addrs = psutil.net_if_addrs()
+    net_if_stats = psutil.net_if_stats()
+    for interface, addrs in net_if_addrs.items():
+        if net_if_stats[interface].isup:
+            for addr in addrs:
+                if addr.family == socket.AF_INET:
+                    return interface
+    return None
+
+
 def sm4_decrypt_ecb(ciphertext: bytes, key: bytes):
     """
     SM4 解密，ECB模式
