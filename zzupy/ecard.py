@@ -87,12 +87,13 @@ class eCard:
         )
         self._eCardAccessToken = json.loads(response.text)["resultData"]["accessToken"]
 
-    def recharge_electricity(self, room: str, paypasswd: str) -> tuple:
+    def recharge_electricity(self, room: str, paypasswd: str,amt: int) -> tuple:
         """
         为 room 充值电费
 
         :param str room: 宿舍房间。理论上空调和照明均支持.格式应为 “areaid-buildingid--unitid-roomid”，可通过get_area_dict(),get_building_dict(),get_unit_dict(),get_room_dict()获取
         :param str paypasswd: 支付密码
+        :param int amt: 充值金额
         :return: (bool,msg) bool 为 True即为成功，msg 为服务端响应信息
         :rtype: tuple
         """
@@ -135,7 +136,7 @@ class eCard:
             "utilityType": "electric",
             "payCode": "06",
             "password": paypasswd,
-            "amt": "10",
+            "amt": str(amt),
             "timestamp": int(round(time.time() * 1000)),
             "bigArea": "",
             "area": room.split("--")[0].split("-")[0],
