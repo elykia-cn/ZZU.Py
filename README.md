@@ -21,7 +21,7 @@ pip install zzupy --upgrade
 
 ## 文档
 
-[文档](https://illustar0.github.io/ZZU.Py/)仍在 In Progress ，建议使用 PyCharm 来获得最佳的开发中文档体验
+[文档](https://illustar0.github.io/ZZU.Py/)
 
 ## Note
 [Note](https://github.com/Illustar0/ZZU.Py/blob/main/NOTE.md)
