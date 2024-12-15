@@ -12,12 +12,14 @@ from zzupy.utils import get_ip_by_interface, get_default_interface
 class Network:
     def __init__(self, parent):
         self._parent = parent
+        self.account=self._parent._userCode
 
     def portal_auth(
         self,
         interface: str = get_default_interface(),
         baseurl="http://10.2.7.8:801",
         ua=UserAgent().random,
+        isp = "campus",
     ) -> Tuple[str, bool, str]:
         """
         进行校园网认证
@@ -25,6 +27,7 @@ class Network:
         :param str interface: 网络接口名
         :param str baseurl: PortalAuth Server URL。一般无需修改
         :param str ua: User-Agent
+        :param str isp: 运营商。可选项：campus,cmcc
         :returns: Tuple[str, bool, str]
 
             - **interface** (str) – 本次认证调用的网络接口。
@@ -32,6 +35,12 @@ class Network:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[str,bool,str]
         """
+        if isp == "campus":
+            self.account=self._parent._userCode
+        elif isp == "cmcc":
+            self.account=self._parent._userCode+"@cmcc"
+        else:
+            self.account = self._parent._userCode
         transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
         local_client = httpx.Client(transport=transport)
         self._chkstatus(local_client, baseurl, ua)
@@ -55,7 +64,7 @@ class Network:
         params = [
             ("callback", "dr1003"),
             ("login_method", "1"),
-            ("user_account", f",0,{self._parent._userCode}"),
+            ("user_account", f",0,{self.account}"),
             (
                 "user_password",
                 base64.b64encode(self._parent._password.encode()).decode(),
