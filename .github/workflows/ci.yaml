@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  workflow_dispatch:
+
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build
+        id: build
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry install
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry build
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zzupy_ci_${{ github.sha }}
+          path: dist/
+          compression-level: 9
+
