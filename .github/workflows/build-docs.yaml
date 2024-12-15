@@ -27,7 +27,7 @@ jobs:
       - name: Build static files
         id: build
         run: |
-          pip install sphinx sphinx_book_theme myst_parser
+          pip install sphinx sphinx_book_theme myst_parser zzupy
           cd docs
           sphinx-apidoc -o source ../zzupy
           make html
