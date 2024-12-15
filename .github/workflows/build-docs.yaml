@@ -22,7 +22,8 @@ jobs:
         id: build
         run: |
           pip install sphinx sphinx_book_theme
-          cd docs
+          ls
+          cd .\docs\
           sphinx-apidoc -o source ../zzupy
           make html
 
