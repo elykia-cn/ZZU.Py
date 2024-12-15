@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('../../zzupy'))
 project = 'ZZU.Py'
 copyright = '2024, Illustar0'
 author = 'Illustar0'
-release = '0.2.0'
+release = '0.2.1'
 autoclass_content = 'both'
 
 
@@ -26,6 +26,7 @@ extensions = [
         'sphinx.ext.coverage',
         'myst_parser',
         'sphinx.ext.githubpages',
+        'sphinx.ext.viewcode',
         'sphinx.ext.mathjax'
 ]
 
