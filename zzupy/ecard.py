@@ -98,9 +98,10 @@ class eCard:
         :param str room: 宿舍房间。理论上空调和照明均支持.格式应为 “areaid-buildingid--unitid-roomid”，可通过get_area_dict(),get_building_dict(),get_unit_dict(),get_room_dict()获取
         :param str paypasswd: 支付密码
         :param int amt: 充值金额
-        :returns: 元组:
-            - success: 充值是否成功
-            - name: 服务器返回信息
+        :returns: Tuple[bool, str]
+
+            - **success** (bool) – 充值是否成功
+            - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
         cookies = {

@@ -25,10 +25,11 @@ class Network:
         :param str interface: 网络接口名
         :param str baseurl: PortalAuth Server URL。一般无需修改
         :param str ua: User-Agent
-        :returns: 元组:\\
-            - interface: 本次认证调用的网络接口。\\
-            - success: 认证是否成功。(不可信，有时失败仍可正常上网)\\
-            - msg: 服务端返回信息。\\
+        :returns: Tuple[str, bool, str]
+
+            - **interface** (str) – 本次认证调用的网络接口。
+            - **success** (bool) – 认证是否成功。(不可信，有时失败仍可正常上网)
+            - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[str,bool,str]
         """
         transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
