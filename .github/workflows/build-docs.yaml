@@ -2,7 +2,7 @@ name: Deploy docs to Pages
 
 on:
   push:
-    branches: [$default-branch]
+    branches: main
 
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ jobs:
       - name: Build static files
         id: build
         run: |
-          pip install sphinx sphinx_book_theme
+          pip install sphinx sphinx_book_theme myst_parser
           cd docs
           sphinx-apidoc -o source ../zzupy
           make html
