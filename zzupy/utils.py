@@ -12,7 +12,7 @@ def get_sign(dynamicSecret, params):
     :param str dynamicSecret: login后自动获取，来自 login-token 请求
     :param str params: URL请求参数
     :return: sign值
-    :return_type: str
+    :rtype: str
     """
     paramsDict = {}
     for param in params.split("&"):
@@ -62,7 +62,7 @@ def sm4_decrypt_ecb(ciphertext: bytes, key: bytes):
     :param bytes ciphertext: 密文
     :param bytes key: 密钥
     :return: 明文 Hex
-    :return_type: str
+    :rtype: str
     """
     sm4 = gmalg.SM4(key)
     block_size = 16

@@ -12,14 +12,14 @@ from zzupy.utils import get_ip_by_interface, get_default_interface
 class Network:
     def __init__(self, parent):
         self._parent = parent
-        self.account=self._parent._userCode
+        self.account = self._parent._userCode
 
     def portal_auth(
         self,
         interface: str = get_default_interface(),
         baseurl="http://10.2.7.8:801",
         ua=UserAgent().random,
-        isp = "campus",
+        isp="campus",
     ) -> Tuple[str, bool, str]:
         """
         进行校园网认证
@@ -36,9 +36,9 @@ class Network:
         :rtype: Tuple[str,bool,str]
         """
         if isp == "campus":
-            self.account=self._parent._userCode
+            self.account = self._parent._userCode
         elif isp == "cmcc":
-            self.account=self._parent._userCode+"@cmcc"
+            self.account = self._parent._userCode + "@cmcc"
         else:
             self.account = self._parent._userCode
         transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
