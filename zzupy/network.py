@@ -27,7 +27,7 @@ class Network:
         :param str interface: 网络接口名
         :param str baseurl: PortalAuth Server URL。一般无需修改
         :param str ua: User-Agent
-        :param str isp: 运营商。可选项：campus,cmcc
+        :param str isp: 运营商。可选项：campus,cm
         :returns: Tuple[str, bool, str]
 
             - **interface** (str) – 本次认证调用的网络接口。
@@ -37,7 +37,11 @@ class Network:
         """
         if isp == "campus":
             self.account = self._parent._userCode
-        elif isp == "cmcc":
+        elif isp == "ct":
+            self.account = self._parent._userCode + "@cmcc"
+        elif isp == "cu":
+            self.account = self._parent._userCode + "@cmcc"
+        elif isp == "cm":
             self.account = self._parent._userCode + "@cmcc"
         else:
             self.account = self._parent._userCode
