@@ -34,11 +34,11 @@ Man, what can I say?
 def get_sign(dynamicSecret, params):
     """
     获取sign值
-    
-    :param str dynamicSecret: 来自 login-token 请求
+
+    :param str dynamicSecret: login后自动获取，来自 login-token 请求
     :param str params: URL请求参数
     :return: sign值
-    :return_type: str
+    :rtype: str
     """
     paramsDict = {}
     for param in params.split("&"):
