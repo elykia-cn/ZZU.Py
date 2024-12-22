@@ -98,8 +98,6 @@ class ZZUPy:
         """
         通过学号和密码登录
 
-        :param str userCode: 学号
-        :param str password: 密码
         :param str appVersion: APP 版本 ，一般类似 "SWSuperApp/1.0.33" ，可自行更新版本号，但详细数据需要抓包获取,位于 "passwordLogin" 请求的 User-Agent 中，也可随便填或空着，目前没有观察到相关风控机制。
         :param str appId: APP 包名，一般不需要修改
         :param str osType: 系统类型，一般不需要修改
