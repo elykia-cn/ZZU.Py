@@ -111,7 +111,7 @@ class Network:
             "lang": "zh",
         }
         client.get(
-            re.sub(r':\d+', '', baseURL)+"/drcom/chkstatus",
+            re.sub(r":\d+", "", baseURL) + "/drcom/chkstatus",
             params=params,
             headers=headers,
         )
