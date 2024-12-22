@@ -25,7 +25,7 @@ class Network:
         进行校园网认证
 
         :param str interface: 网络接口名
-        :param str baseurl: PortalAuth Server URL。一般无需修改
+        :param str baseurl: PortalAuth 服务器。根据情况修改
         :param str ua: User-Agent
         :param str isp: 运营商。可选项：campus,cm
         :returns: Tuple[str, bool, str]
