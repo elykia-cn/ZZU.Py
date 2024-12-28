@@ -12,12 +12,12 @@ class Supwisdom:
     def __init__(self, parent):
         self._parent = parent
 
-    def getCoursesJson(self, start_date: str) -> str:
+    def get_courses(self, start_date: str) -> str:
         """
         获取课程表
 
         :param str start_date: 课表的开始日期，格式必须为 %Y-%m-%d ，且必须为某一周周一，否则课表会时间错乱
-        :return: 返回课程表数据，格式为json
+        :return: 返回 Json 格式的课程表数据
         :rtype: str
         """
         cookies = {

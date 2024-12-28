@@ -158,8 +158,8 @@ class Network:
         """
         登录自助服务平台
 
-        :param loginurl: 自助服务平台的登录 URL
-        :param ua: User Agent
+        :param str loginurl: 自助服务平台的登录 URL
+        :param str ua: User Agent
         """
         self.system_ua = ua
         self.system_loginurl = loginurl
@@ -313,7 +313,7 @@ class Network:
         """
         获取使用时间
 
-        :return: 使用时间，单位为 分钟
+        :return int: 使用时间，单位为 分钟
         :rtype: int
         """
         cookies = {
@@ -343,7 +343,7 @@ class Network:
     def logout_device(self, sessionid: str) -> bool:
         """
 
-        :param sessionid: sessionid,可通过 get_online_devices() 获取
+        :param str sessionid: sessionid,可通过 get_online_devices() 获取
         :return: 成功或失败
         :rtype: bool
         """

@@ -36,7 +36,7 @@ info = me.login()
 print(f"{info[0]} {info[1]} 登录成功")
 print("校园卡余额：", str(me.eCard.get_balance()))
 print("剩余电费：", str(me.eCard.get_remaining_power("roomid")))
-print("课表JSON：", me.Supwisdom.get_courses_json("2024-12-09"))
+print("课表JSON：", me.Supwisdom.get_courses("2024-12-09"))
 ```
 
 ## 许可
