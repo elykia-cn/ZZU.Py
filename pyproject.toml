@@ -17,6 +17,7 @@ loguru = "*"
 psutil = "*"
 pycryptodome = "*"
 typing-extensions = "*"
+beautifulsoup4 = "*"
 
 
 [build-system]
