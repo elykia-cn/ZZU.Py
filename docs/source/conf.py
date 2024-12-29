@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath('../../zzupy'))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'ZZU.Py'
-copyright = '2025, Illustar0'
+copyright = '2024-2025, Illustar0'
 author = 'Illustar0'
 release = '0.2.4'
 autoclass_content = 'both'
