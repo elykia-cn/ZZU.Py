@@ -11,7 +11,13 @@ pip install zzupy --upgrade
 - [x] Supwisdom
   - [x] 获取课表
 - [x] Network
-  - [x] 校园网认证
+  - [x] 校园网认证 
+    - [x] 校园网
+    - [x] 移动宽带
+  - [x] 获取在线设备数据
+  - [x] 获取消耗流量
+  - [x] 获取使用时长
+  - [x] 注销设备
 - [x] eCard
   - [x] 充值电费 
   - [x] 获取校园卡余额
@@ -37,6 +43,8 @@ print(f"{info[0]} {info[1]} 登录成功")
 print("校园卡余额：", str(me.eCard.get_balance()))
 print("剩余电费：", str(me.eCard.get_remaining_power("roomid")))
 print("课表JSON：", me.Supwisdom.get_courses("2024-12-09"))
+me.Network.login()
+print(me.Network.get_online_devices())
 ```
 
 ## 许可
