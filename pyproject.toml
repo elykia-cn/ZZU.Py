@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zzupy"
-version = "1.0.2"
+version = "1.0.0"
 description = "郑州大学移动校园的 Python API 封装 / An API wrapper for Zhengzhou University Mobile Campus written in Python."
 authors = ["Illustar0 <me@illustar0.com>"]
 license = "MIT"

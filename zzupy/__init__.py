@@ -1,2 +1,2 @@
 from .api import ZZUPy
-__version__="1.0.2"
+__version__="1.0.0"
