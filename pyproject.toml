@@ -3,7 +3,7 @@ name = "zzupy"
 version = "1.0.0"
 description = "郑州大学移动校园的 Python API 封装 / An API wrapper for Zhengzhou University Mobile Campus written in Python."
 authors = ["Illustar0 <me@illustar0.com>"]
-license = { text = "MIT" }
+license = "MIT"
 readme = "README.md"
 documentation = "https://illustar0.github.io/ZZU.Py"
 repository = "https://github.com/Illustar0/ZZU.Py"
