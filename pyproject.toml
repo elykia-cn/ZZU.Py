@@ -30,6 +30,6 @@ version_variables = [
     "docs/source/conf.py:release",
 ]
 version_toml = [
-    "pyproject.toml:project.version"
+    "pyproject.toml:tool.poetry.version"
 ]
 build_command = "pip install poetry && poetry build"
