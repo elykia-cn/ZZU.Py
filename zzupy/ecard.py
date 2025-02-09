@@ -530,4 +530,4 @@ class eCard:
             headers=headers,
             json=data,
         )
-        return json.loads(response.text)["resultData"]["templateList"][3]["value"]
+        return float(json.loads(response.text)["resultData"]["templateList"][3]["value"])
