@@ -108,12 +108,12 @@ class ZZUPy:
         :rtype: Tuple[str,str]
         """
         headers = {
-            "User-Agent": f'{appVersion}({self._DeviceParams["deviceName"]})',
+            "User-Agent": f"{appVersion}({self._DeviceParams['deviceName']})",
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
         }
         response = httpx.post(
-            f'https://token.s.zzu.edu.cn/password/passwordLogin?username={self._userCode}&password={self._password}&appId={appId}&geo&deviceId={self._DeviceParams["deviceId"]}&osType={osType}&clientId&mfaState',
+            f"https://token.s.zzu.edu.cn/password/passwordLogin?username={self._userCode}&password={self._password}&appId={appId}&geo&deviceId={self._DeviceParams['deviceId']}&osType={osType}&clientId&mfaState",
             headers=headers,
         )
         self._set_params_from_password_login(response.text)
