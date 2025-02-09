@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath("../../zzupy"))
 project = "ZZU.Py"
 copyright = "2024-2025, Illustar0"
 author = "Illustar0"
-release = "1.0.0"
+release = "1.0.1"
 autoclass_content = "both"
 
 
