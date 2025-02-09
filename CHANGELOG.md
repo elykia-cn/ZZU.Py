@@ -1,6 +1,28 @@
 # CHANGELOG
 
 
+## v1.0.1 (2025-02-09)
+
+### Bug Fixes
+
+- Fix a field error that caused the version to fail to be published
+  ([`e7615ca`](https://github.com/Illustar0/ZZU.Py/commit/e7615caea2fc73b33096147000f250d8f1402be6))
+
+Signed-off-by: Illustar0 <me@illustar0.com>
+
+- License error
+  ([`1f85a71`](https://github.com/Illustar0/ZZU.Py/commit/1f85a71df95363daa9017e967dc57836fc42a201))
+
+Signed-off-by: Illustar0 <me@illustar0.com>
+
+### Chores
+
+- Change license
+  ([`3186cbc`](https://github.com/Illustar0/ZZU.Py/commit/3186cbceeec150516989cc78874811afda6d6972))
+
+Signed-off-by: Illustar0 <me@illustar0.com>
+
+
 ## v1.0.0 (2025-02-09)
 
 ### Bug Fixes
@@ -36,6 +58,11 @@
 
 - Bump dependencies
   ([`bc8ea0c`](https://github.com/Illustar0/ZZU.Py/commit/bc8ea0c46d6c6c8bd7c23807ab9c97e10ea5f709))
+
+Signed-off-by: Illustar0 <me@illustar0.com>
+
+- Bump version
+  ([`16c224f`](https://github.com/Illustar0/ZZU.Py/commit/16c224f3e537a6e80d5ab8815d8b880e3bb7dd7d))
 
 Signed-off-by: Illustar0 <me@illustar0.com>
 
