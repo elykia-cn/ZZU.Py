@@ -1,6 +1,9 @@
 # CHANGELOG
 
 
+## v1.0.2 (2025-02-09)
+
+
 ## v1.0.1 (2025-02-09)
 
 ### Bug Fixes
@@ -14,6 +17,9 @@ Signed-off-by: Illustar0 <me@illustar0.com>
   ([`1f85a71`](https://github.com/Illustar0/ZZU.Py/commit/1f85a71df95363daa9017e967dc57836fc42a201))
 
 Signed-off-by: Illustar0 <me@illustar0.com>
+
+- Type error
+  ([`a9c82f1`](https://github.com/Illustar0/ZZU.Py/commit/a9c82f15919e0249439d15d332b117d2062af0c1))
 
 ### Chores
 
