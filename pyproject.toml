@@ -23,3 +23,13 @@ beautifulsoup4 = "*"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.semantic_release]
+version_variables = [
+    "zzupy/__init__.py:__version__",
+    "docs/source/conf.py:release",
+]
+version_toml = [
+    "pyproject.toml:project.version"
+]
+build_command = "pip install poetry && poetry build"
