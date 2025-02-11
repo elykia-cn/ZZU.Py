@@ -1,7 +1,0 @@
-fake_useragent
-gmalg
-httpx
-loguru
-psutil
-pycryptodome
-typing_extensions

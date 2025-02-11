@@ -1,28 +1,29 @@
-[tool.poetry]
+[project]
 name = "zzupy"
 version = "1.0.2"
 description = "郑州大学移动校园的 Python API 封装 / An API wrapper for Zhengzhou University Mobile Campus written in Python."
-authors = ["Illustar0 <me@illustar0.com>"]
-license = "MIT"
+authors = [{ name = "Illustar0", email = "me@illustar0.com" }]
+requires-python = "~=3.8"
 readme = "README.md"
-documentation = "https://illustar0.github.io/ZZU.Py"
-repository = "https://github.com/Illustar0/ZZU.Py"
+license = "MIT"
+dependencies = [
+    "beautifulsoup4>=4.13.3",
+    "fake-useragent>=2.0.0",
+    "gmalg>=1.0.6",
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "psutil>=6.1.1",
+    "pycryptodome>=3.21.0",
+    "typing-extensions>=4.12.2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-fake-useragent = "*"
-gmalg = "*"
-httpx = "*"
-loguru = "*"
-psutil = "*"
-pycryptodome = "*"
-typing-extensions = "*"
-beautifulsoup4 = "*"
-
+[project.urls]
+Repository = "https://github.com/Illustar0/ZZU.Py"
+Documentation = "https://illustar0.github.io/ZZU.Py"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.semantic_release]
 version_variables = [
@@ -32,4 +33,4 @@ version_variables = [
 version_toml = [
     "pyproject.toml:tool.poetry.version"
 ]
-build_command = "pip install poetry && poetry build"
+build_command = "uv build"
