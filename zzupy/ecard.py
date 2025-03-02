@@ -8,8 +8,8 @@ import gmalg
 from typing_extensions import Tuple
 from loguru import logger
 
-from .exception import LoginException
-from .utils import sm4_decrypt_ecb
+from zzupy.exception import LoginException
+from zzupy.utils import sm4_decrypt_ecb
 
 
 class eCard:

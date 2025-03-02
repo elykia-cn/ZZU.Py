@@ -7,12 +7,12 @@ import time
 from typing_extensions import Unpack, Tuple
 from loguru import logger
 
-from .typing import DeviceParams
-from .utils import get_sign, _kget
-from .supwisdom import Supwisdom
-from .ecard import eCard
-from .network import Network
-from .exception import LoginException
+from zzupy.typing import DeviceParams
+from zzupy.utils import get_sign, _kget
+from zzupy.supwisdom import Supwisdom
+from zzupy.ecard import eCard
+from zzupy.network import Network
+from zzupy.exception import LoginException
 
 
 class ZZUPy:
