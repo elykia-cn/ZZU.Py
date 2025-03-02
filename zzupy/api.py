@@ -91,7 +91,7 @@ class ZZUPy:
 
     def login(
         self,
-        appVersion: str = "SWSuperApp/1.0.38",
+        appVersion: str = "SWSuperApp/1.0.39",
         appId: str = "com.supwisdom.zzu",
         osType: str = "android",
     ) -> Tuple[str, str]:
