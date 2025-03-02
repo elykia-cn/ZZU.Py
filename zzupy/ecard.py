@@ -107,7 +107,8 @@ class eCard:
         """
         if room is None:
             headers = {
-                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
+                + "SuperApp",
                 "Content-Type": "application/json",
                 "sec-ch-ua-platform": '"Android"',
                 "Authorization": self._eCardAccessToken,
@@ -433,7 +434,8 @@ class eCard:
         """
         if room is None:
             headers = {
-                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
+                + "SuperApp",
                 "Content-Type": "application/json",
                 "sec-ch-ua-platform": '"Android"',
                 "Authorization": self._eCardAccessToken,
