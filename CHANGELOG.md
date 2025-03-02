@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v2.0.1 (2025-03-02)
+
+### Bug Fixes
+
+- Unable to generate document
+  ([`b29393a`](https://github.com/Illustar0/ZZU.Py/commit/b29393ae56679d5975349e2da2b77a043c5b0805))
+
+
 ## v2.0.0 (2025-03-02)
 
 ### Chores
