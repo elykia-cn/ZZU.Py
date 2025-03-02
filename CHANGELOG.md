@@ -1,6 +1,106 @@
 # CHANGELOG
 
 
+## v2.0.0 (2025-03-02)
+
+### Chores
+
+- Replace poetry with uv
+  ([`e9da782`](https://github.com/Illustar0/ZZU.Py/commit/e9da782c4d57d4f7b02d5181f75ae2f49d996899))
+
+uv is really too fast!
+
+- Update build command
+  ([`85ee7fc`](https://github.com/Illustar0/ZZU.Py/commit/85ee7fc67e670b894620a41eb65dfe3d93792712))
+
+- Update renovate config
+  ([`ec18baf`](https://github.com/Illustar0/ZZU.Py/commit/ec18baff35af8d44d05d7f7bee0a6720e2395642))
+
+- Update version_toml
+  ([`96c3a3f`](https://github.com/Illustar0/ZZU.Py/commit/96c3a3f8ac686c5817f0cd424c6363411b70098a))
+
+- **deps**: Update python-semantic-release/publish-action action to v9.19.1
+  ([#2](https://github.com/Illustar0/ZZU.Py/pull/2),
+  [`6b98903`](https://github.com/Illustar0/ZZU.Py/commit/6b989035ae02b4385344c828ab071880a84ff66a))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+- **deps**: Update python-semantic-release/publish-action action to v9.20.0
+  ([#5](https://github.com/Illustar0/ZZU.Py/pull/5),
+  [`ed0a9f3`](https://github.com/Illustar0/ZZU.Py/commit/ed0a9f36edf0402bd0f234ef8010bec3ced41b8c))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+- **deps**: Update python-semantic-release/publish-action action to v9.21.0
+  ([#7](https://github.com/Illustar0/ZZU.Py/pull/7),
+  [`1364b87`](https://github.com/Illustar0/ZZU.Py/commit/1364b87966a21d49b650240e0a7156903061e91d))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+- **deps**: Update python-semantic-release/python-semantic-release action to v9.19.1
+  ([#3](https://github.com/Illustar0/ZZU.Py/pull/3),
+  [`3dd61a9`](https://github.com/Illustar0/ZZU.Py/commit/3dd61a94b56a5ace9ad73c7491bd8fb13e6eb424))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+- **deps**: Update python-semantic-release/python-semantic-release action to v9.20.0
+  ([#6](https://github.com/Illustar0/ZZU.Py/pull/6),
+  [`b8db4f7`](https://github.com/Illustar0/ZZU.Py/commit/b8db4f7096277f2c953428696c7dd39d839ccf09))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+- **deps**: Update python-semantic-release/python-semantic-release action to v9.21.0
+  ([#8](https://github.com/Illustar0/ZZU.Py/pull/8),
+  [`6d8550a`](https://github.com/Illustar0/ZZU.Py/commit/6d8550ab665a43d2560f7e4b522bb547c9a8f560))
+
+Co-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>
+
+### Continuous Integration
+
+- Fix the wrong command
+  ([`25e764f`](https://github.com/Illustar0/ZZU.Py/commit/25e764f9aa89472789dfee124a210eb423cf7c7c))
+
+- Modify commit message
+  ([`0c49df9`](https://github.com/Illustar0/ZZU.Py/commit/0c49df983a0fb3eae037009ac8b6fdab74cfbff7))
+
+### Features
+
+- Allow cookie login
+  ([`ebb159e`](https://github.com/Illustar0/ZZU.Py/commit/ebb159e7a193c9a8c64f1450024ef7750d38f36e))
+
+Refactored the network processing module to allow logging in via cookies, as well as reformatted the
+  code and added some logging
+
+- Bump app version
+  ([`16e9544`](https://github.com/Illustar0/ZZU.Py/commit/16e9544a3a4332b59480c4211a110ffdc64dafa0))
+
+- Initial exception handling
+  ([`94faba3`](https://github.com/Illustar0/ZZU.Py/commit/94faba31954e8a1fc27429c46efc06f8850f1748))
+
+- Support for getting the default room
+  ([`d0d7437`](https://github.com/Illustar0/ZZU.Py/commit/d0d74372b06cfaa5a2a5fe195853e4e8faf8d05c))
+
+Now get_remaining_energy() and recharge_energy() can automatically get the default room of the
+  account, so room is no longer a required parameter
+
+BREAKING CHANGE: room parameter position adjustment
+
+Since the room parameter is no longer necessary, the position of the room parameter of
+  recharge_energy() has been adjusted
+
+### Refactoring
+
+- Format code
+  ([`b3c81ad`](https://github.com/Illustar0/ZZU.Py/commit/b3c81ada9437e0d7e54fa8746019b5e579ff4fd5))
+
+- Optimize imports
+  ([`caceaa9`](https://github.com/Illustar0/ZZU.Py/commit/caceaa9172856143d3b865388a5c675298ff81e0))
+
+### Breaking Changes
+
+- Room parameter position adjustment
+
+
 ## v1.0.2 (2025-02-09)
 
 
