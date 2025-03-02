@@ -1,6 +1,8 @@
 import base64
 import json
 import time
+import warnings
+
 import httpx
 import gmalg
 from typing_extensions import Tuple
@@ -88,8 +90,8 @@ class eCard:
             "refreshToken"
         ]
 
-    def recharge_electricity(
-        self, room: str, payment_password: str, amt: int
+    def recharge_energy(
+        self, payment_password: str, amt: int, room: str | None = None
     ) -> Tuple[bool, str]:
         """
         为 room 充值电费
@@ -103,6 +105,35 @@ class eCard:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
+        if room is None:
+            headers = {
+                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+                "Content-Type": "application/json",
+                "sec-ch-ua-platform": '"Android"',
+                "Authorization": self._eCardAccessToken,
+                "sec-ch-ua": '"Not(A:Brand";v="99", "Android WebView";v="133", "Chromium";v="133"',
+                "sec-ch-ua-mobile": "?1",
+                "Origin": "https://ecard.v.zzu.edu.cn",
+                "X-Requested-With": "com.supwisdom.zzu",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Dest": "empty",
+                "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            }
+
+            data = {
+                "utilityType": "electric",
+            }
+
+            response = self._parent._client.post(
+                "https://ecard.v.zzu.edu.cn/server/utilities/config",
+                headers=headers,
+                json=data,
+            )
+            logger.debug(f"/utilities/config 请求响应体：{response.text}")
+            logger.debug("尝试获取默认 room")
+            room = json.loads(response.text)["resultData"]["location"]["room"]
 
         headers = {
             "Accept": "*/*",
@@ -392,7 +423,7 @@ class eCard:
             ] = json.loads(response.text)["resultData"]["locationList"][i]["name"]
         return RoomDict
 
-    def get_remaining_power(self, room: str) -> float:
+    def get_remaining_energy(self, room: str | None = None) -> float:
         """
         获取剩余电量
 
@@ -400,6 +431,35 @@ class eCard:
         :return: 剩余电量
         :rtype: float
         """
+        if room is None:
+            headers = {
+                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+                "Content-Type": "application/json",
+                "sec-ch-ua-platform": '"Android"',
+                "Authorization": self._eCardAccessToken,
+                "sec-ch-ua": '"Not(A:Brand";v="99", "Android WebView";v="133", "Chromium";v="133"',
+                "sec-ch-ua-mobile": "?1",
+                "Origin": "https://ecard.v.zzu.edu.cn",
+                "X-Requested-With": "com.supwisdom.zzu",
+                "Sec-Fetch-Site": "same-origin",
+                "Sec-Fetch-Mode": "cors",
+                "Sec-Fetch-Dest": "empty",
+                "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+            }
+
+            data = {
+                "utilityType": "electric",
+            }
+
+            response = self._parent._client.post(
+                "https://ecard.v.zzu.edu.cn/server/utilities/config",
+                headers=headers,
+                json=data,
+            )
+            logger.debug(f"/utilities/config 请求响应体：{response.text}")
+            logger.debug("尝试获取默认 room")
+            room = json.loads(response.text)["resultData"]["location"]["room"]
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -437,3 +497,21 @@ class eCard:
         return float(
             json.loads(response.text)["resultData"]["templateList"][3]["value"]
         )
+
+    def get_remaining_power(self, room: str | None = None) -> float:
+        logger.warning("get_remaining_power() 已废弃，请使用 get_remaining_energy()")
+        warnings.warn(
+            "get_remaining_power() is deprecated, please use get_remaining_energy()",
+            DeprecationWarning,
+        )
+        return self.get_remaining_energy(room)
+
+    def recharge_electricity(
+        self, payment_password: str, amt: int, room: str | None = None
+    ) -> Tuple[bool, str]:
+        logger.warning("recharge_electricity() 已废弃，请使用 recharge_energy()")
+        warnings.warn(
+            "recharge_electricity() is deprecated, please use recharge_energy()",
+            DeprecationWarning,
+        )
+        return self.recharge_energy(payment_password, amt, room)
