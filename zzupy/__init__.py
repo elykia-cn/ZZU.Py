@@ -1,2 +1,8 @@
 from .api import ZZUPy
-__version__="1.0.2"
+from .log import logger, configure_logging
+from loguru import logger
+
+logger.remove()
+
+__version__ = "1.0.2"
+__all__ = ["ZZUPy", "logger", "configure_logging"]

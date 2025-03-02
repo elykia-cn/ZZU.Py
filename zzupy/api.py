@@ -4,23 +4,23 @@ import json
 import base64
 import time
 from typing_extensions import Unpack, Tuple
+from loguru import logger
 
-from .log import logger
 from .typing import DeviceParams
 from .utils import get_sign, _kget
 from .supwisdom import Supwisdom
 from .ecard import eCard
 from .network import Network
+from .exception import LoginException
 
 
 class ZZUPy:
-    def __init__(self, usercode: str, password: str, log: bool = False):
+    def __init__(self, usercode: str, password: str):
         """
         初始化一个 ZZUPy 对象
 
         :param str usercode: 学号
         :param str password: 密码
-        :param bool log: 是否启用日志
         """
         self._userToken = None
         self._dynamicSecret = "supwisdom_eams_app_secret"
@@ -28,7 +28,6 @@ class ZZUPy:
         self._refreshToken = None
         self._name = None
         self._isLogged = False
-        self._logEnabled = log
         self._DeviceParams = {}
         self._DeviceParams["deviceName"] = ""
         self._DeviceParams["deviceId"] = ""
@@ -41,14 +40,16 @@ class ZZUPy:
         self.Network = Network(self)
         self.eCard = eCard(self)
         self.Supwisdom = Supwisdom(self)
+        logger.info(f"已配置账户 {usercode}")
 
     def _set_params_from_password_login(self, res: str):
         try:
             self._userToken = json.loads(res)["data"]["idToken"]
             # 我也不知道 refreshToken 有什么用，但先存着吧
             self._refreshToken = json.loads(res)["data"]["refreshToken"]
-        except:
-            logger.error("LoginFailed")
+        except Exception as exc:
+            logger.error("从 /passwordLogin 请求中获取 userToken 和 refreshToken 失败")
+            raise LoginException from exc
 
     def _set_params_from_login_token(self, res: str):
         try:
@@ -61,8 +62,11 @@ class ZZUPy:
             self._name = json.loads(base64.b64decode(json.loads(res)["business_data"]))[
                 "user_info"
             ]["user_name"]
-        except:
-            logger.error("LoginFailed")
+        except Exception as exc:
+            logger.error(
+                "从 /login-token 请求中获取 dynamicSecret 、 dynamicToken 和用户信息失败"
+            )
+            raise LoginException from exc
 
     def set_device_params(self, **kwargs: Unpack[DeviceParams]):
         """
@@ -87,6 +91,7 @@ class ZZUPy:
             self._DeviceParams["userAgentPrecursor"] = (
                 self._DeviceParams["userAgentPrecursor"] + " "
             )
+        logger.info("已配置设备参数")
         # self.DeviceParamsSet = True
 
     def login(
