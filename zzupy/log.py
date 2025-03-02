@@ -12,7 +12,7 @@ def configure_logging(
     log_file: str | PathLike[str] = None,
     rotation: str = "10 MB",
     retention: str = "1 week",
-    log_format: str = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> - <lvl>{level:^8}</> - <cyan>{name}</cyan> : <cyan>{module}</cyan> : <cyan>{line:^4}</cyan> - <lvl>{message}</>",
+    log_format: str = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> - <lvl>{level:^8}</> - <cyan>{name:^12}</cyan> : <cyan>{module:^7}</cyan> : <cyan>{line:^4}</cyan> - <lvl>{message}</>",
 ) -> logger:
     """
 

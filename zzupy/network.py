@@ -14,7 +14,7 @@ from zzupy.utils import get_ip_by_interface, get_default_interface
 class Network:
     def __init__(self, parent):
         self._parent = parent
-        self.account = self._parent._userCode
+        self.account = self._parent._usercode
         self._JSessionID = ""
         self._checkcode = ""
         self.system_ua = ""
@@ -42,15 +42,15 @@ class Network:
         :rtype: Tuple[str,bool,str]
         """
         if isp == "campus":
-            self.account = self._parent._userCode
+            self.account = self._parent._usercode
         elif isp == "ct":
-            self.account = self._parent._userCode + "@cmcc"
+            self.account = self._parent._usercode + "@cmcc"
         elif isp == "cu":
-            self.account = self._parent._userCode + "@cmcc"
+            self.account = self._parent._usercode + "@cmcc"
         elif isp == "cm":
-            self.account = self._parent._userCode + "@cmcc"
+            self.account = self._parent._usercode + "@cmcc"
         else:
-            self.account = self._parent._userCode
+            self.account = self._parent._usercode
         transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
         local_client = httpx.Client(transport=transport)
         self._chkstatus(local_client, authurl, ua)
@@ -228,7 +228,7 @@ class Network:
             "bar": "",
             # 我草，太坏了，这个 checkcode 居然是直接动态写死在网页里的，搞得我扣了半天算法抠不出来
             "checkcode": self._checkcode,
-            "account": self._parent._userCode,
+            "account": self._parent._usercode,
             "password": self._parent._password,
             "code": "",
         }

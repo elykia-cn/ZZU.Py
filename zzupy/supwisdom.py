@@ -20,12 +20,6 @@ class Supwisdom:
         :return: 返回 Json 格式的课程表数据
         :rtype: str
         """
-        cookies = {
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-            "SVRNAME": "ws1",
-        }
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -65,9 +59,8 @@ class Supwisdom:
         sign = get_sign(self._parent._dynamicSecret, params)
         data["sign"] = sign
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://jw.v.zzu.edu.cn/app-ws/ws/app-service/student/course/schedule/get-course-tables",
-            cookies=cookies,
             headers=headers,
             data=data,
         )

@@ -4,8 +4,10 @@ import time
 import httpx
 import gmalg
 from typing_extensions import Tuple
+from loguru import logger
 
-from zzupy.utils import sm4_decrypt_ecb
+from .exception import LoginException
+from .utils import sm4_decrypt_ecb
 
 
 class eCard:
@@ -16,12 +18,6 @@ class eCard:
         self._tid = ""
 
     def _get_eacrd_access_token(self):
-        cookies = {
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
-
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -44,22 +40,22 @@ class eCard:
             "org": "2",
             "token": self._parent._userToken,
         }
-
-        response = httpx.get(
+        logger.debug("尝试获取 JSessionID 和 tid")
+        response = self._parent._client.get(
             "https://ecard.v.zzu.edu.cn/server/auth/host/open",
             params=params,
-            cookies=cookies,
             headers=headers,
             follow_redirects=False,
         )
-        self._JSessionID = response.headers["set-cookie"].split("=")[1].split(";")[0]
-        self._tid = response.headers["location"].split("=")[1].split("&")[0]
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
+        logger.debug(f"/auth/host/open 请求响应头：{response.headers}")
+        try:
+            self._JSessionID = (
+                response.headers["set-cookie"].split("=")[1].split(";")[0]
+            )
+            self._tid = response.headers["location"].split("=")[1].split("&")[0]
+        except Exception as exc:
+            logger.error("从 /auth/host/open 请求中提取 JSessionID 和 tid 失败")
+            raise LoginException from exc
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -81,22 +77,25 @@ class eCard:
             "tid": self._tid,
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/auth/getToken",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
+        logger.debug(f"/auth/getToken 请求响应体：{response.text}")
         self._eCardAccessToken = json.loads(response.text)["resultData"]["accessToken"]
+        self._eCardRefreshToken = json.loads(response.text)["resultData"][
+            "refreshToken"
+        ]
 
     def recharge_electricity(
-        self, room: str, paypasswd: str, amt: int
+        self, room: str, payment_password: str, amt: int
     ) -> Tuple[bool, str]:
         """
         为 room 充值电费
 
         :param str room: 宿舍房间。理论上空调和照明均支持.格式应为 “areaid-buildingid--unitid-roomid”，可通过get_area_dict(),get_building_dict(),get_unit_dict(),get_room_dict()获取
-        :param str paypasswd: 支付密码
+        :param str payment_password: 支付密码
         :param int amt: 充值金额
         :returns: Tuple[bool, str]
 
@@ -104,9 +103,6 @@ class eCard:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
 
         headers = {
             "Accept": "*/*",
@@ -126,9 +122,8 @@ class eCard:
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
         }
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/auth/getEncrypt",
-            cookies=cookies,
             headers=headers,
         )
         pay_id = json.loads(response.text)["resultData"]["id"]
@@ -142,7 +137,7 @@ class eCard:
         json_data = {
             "utilityType": "electric",
             "payCode": "06",
-            "password": paypasswd,
+            "password": payment_password,
             "amt": str(amt),
             "timestamp": int(round(time.time() * 1000)),
             "bigArea": "",
@@ -159,9 +154,8 @@ class eCard:
         sm2 = gmalg.SM2(pk=bytes.fromhex(public_key))
         encrypted_params = sm2.encrypt(json_string.encode())
         data = {"id": pay_id, "params": (encrypted_params.hex())[2:]}
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/pay",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
@@ -204,12 +198,6 @@ class eCard:
         :return: 区域字典
         :rtype: dict
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -240,9 +228,8 @@ class eCard:
             "subArea": "",
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
@@ -261,12 +248,6 @@ class eCard:
         :return: 建筑字典
         :rtype: dict
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -297,9 +278,8 @@ class eCard:
             "subArea": "",
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
@@ -319,12 +299,6 @@ class eCard:
         :return: 照明/空调字典
         :rtype: dict
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -355,9 +329,8 @@ class eCard:
             "subArea": "",
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
@@ -378,13 +351,6 @@ class eCard:
         :return: 房间字典
         :rtype: dict
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
-
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -414,9 +380,8 @@ class eCard:
             "subArea": "",
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
@@ -435,66 +400,6 @@ class eCard:
         :return: 剩余电量
         :rtype: float
         """
-        # bind 请求，似乎不必要还会花费大量时间
-        """
-        AreaDict=self.get_area_dict()
-        BuildingDict=self.get_building_dict(room.split("--")[0].split("-")[0])
-        UnitDict=self.get_unit_dict(room.split("--")[0].split("-")[0],room.split("--")[0].split("-")[1])
-        RoomDict=self.get_room_dict(room.split("--")[0].split("-")[0],room.split("--")[0].split("-")[1],room.split("--")[1].split("-")[0])
-
-        cookies = {
-            'JSESSIONID': self._JSessionID,
-            'userToken': self._parent._userToken,
-            'Domain': '.zzu.edu.cn',
-            'Path': '/',
-        }
-
-
-        headers = {
-            'User-Agent':  self._parent._DeviceParams["userAgentPrecursor"]+'SuperApp',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'Content-Type': 'application/json',
-            'sec-ch-ua-platform': '"Android"',
-            'Authorization': self._eCardAccessToken,
-            'sec-ch-ua': '"Android WebView";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-            'sec-ch-ua-mobile': '?1',
-            'Origin': 'https://ecard.v.zzu.edu.cn',
-            'X-Requested-With': 'com.supwisdom.zzu',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Dest': 'empty',
-            'Referer': f'https://ecard.v.zzu.edu.cn/?tid={_tid}&orgId=2',
-            'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-        }
-
-        json_data = {
-            'bigArea': '',
-            'bigAreaName': '',
-            'area': room.split("--")[0].split("-")[0],
-            'areaName': AreaDict[room.split("--")[0].split("-")[0]],
-            'building': room.split("--")[0].split("-")[1],
-            'buildingName': BuildingDict[room.split("--")[0].split("-")[1]],
-            'unit': '',
-            'unitName': None,
-            'level': room.split("--")[1].split("-")[0],
-            'levelName': UnitDict[room.split("--")[1].split("-")[0]],
-            'room': room,
-            'roomName': RoomDict[room],
-            'subArea': '',
-            'subAreaName': None,
-            'utilityType': 'electric',
-            'locationType': 'room',
-        }
-
-        response = httpx.post('https://ecard.v.zzu.edu.cn/server/utilities/bind', cookies=cookies, headers=headers,json=json_data)
-        """
-
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-            "userToken": self._parent._userToken,
-            "Domain": ".zzu.edu.cn",
-            "Path": "/",
-        }
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -524,10 +429,11 @@ class eCard:
             "subArea": "",
         }
 
-        response = httpx.post(
+        response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/account",
-            cookies=cookies,
             headers=headers,
             json=data,
         )
-        return float(json.loads(response.text)["resultData"]["templateList"][3]["value"])
+        return float(
+            json.loads(response.text)["resultData"]["templateList"][3]["value"]
+        )
