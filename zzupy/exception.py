@@ -21,6 +21,7 @@ class ECardTokenException(ZZUPyException):
 
     pass
 
+
 class PermissionException(ZZUPyException):
     """校园卡 Token 相关异常"""
 

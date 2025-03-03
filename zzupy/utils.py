@@ -73,6 +73,7 @@ def sm4_decrypt_ecb(ciphertext: bytes, key: bytes):
     decrypted = unpad(decrypted_padded, block_size)
     return decrypted.decode()
 
+
 def check_permission(self):
     if self.is_logged_in():
         pass

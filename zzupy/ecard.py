@@ -3,7 +3,7 @@ import json
 import threading
 import time
 import warnings
-from urllib.parse import urlparse,parse_qs
+from urllib.parse import urlparse, parse_qs
 
 import gmalg
 from typing_extensions import Tuple
@@ -269,21 +269,21 @@ class eCard:
         """
 
         check_permission(self._parent)
-        num=id.count("-")
-        if num==0 and id =="":
-            area=building=level=""
-            location_type="bigArea"
-        elif num==0 and id !="":
-            building=level=""
-            area =id
-            location_type="building"
-        elif num==1:
-            area,building=id.split("-")
-            level=""
+        num = id.count("-")
+        if num == 0 and id == "":
+            area = building = level = ""
+            location_type = "bigArea"
+        elif num == 0 and id != "":
+            building = level = ""
+            area = id
+            location_type = "building"
+        elif num == 1:
+            area, building = id.split("-")
+            level = ""
             location_type = "unit"
-        elif num==3:
-            area,building=id.split("--")[0].split("-")
-            level=id.split("--")[1]
+        elif num == 3:
+            area, building = id.split("--")[0].split("-")
+            level = id.split("--")[1]
             location_type = "room"
         else:
             raise ValueError("参数不合法")
