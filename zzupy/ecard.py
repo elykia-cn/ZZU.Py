@@ -5,7 +5,6 @@ import time
 import warnings
 from urllib.parse import urlparse,parse_qs
 
-import httpx
 import gmalg
 from typing_extensions import Tuple
 from loguru import logger
@@ -251,7 +250,7 @@ class eCard:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        response = httpx.get(
+        response = self._parent._client.get(
             "https://info.s.zzu.edu.cn/portal-api/v1/thrid-adapter/get-person-info-card-list",
             headers=headers,
         )
