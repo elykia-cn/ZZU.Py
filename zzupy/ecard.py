@@ -270,14 +270,21 @@ class eCard:
 
         check_permission(self._parent)
         num=id.count("-")
-        if num==0:
+        if num==0 and id =="":
             area=building=level=""
+            location_type="bigArea"
+        elif num==0 and id !="":
+            building=level=""
+            area =id
+            location_type="building"
         elif num==1:
             area,building=id.split("-")
             level=""
+            location_type = "unit"
         elif num==3:
             area,building=id.split("--")[0].split("-")
             level=id.split("--")[1]
+            location_type = "room"
         else:
             raise ValueError("参数不合法")
 
@@ -300,7 +307,7 @@ class eCard:
 
         data = {
             "utilityType": "electric",
-            "locationType": "room",
+            "locationType": location_type,
             "bigArea": "",
             "area": area,
             "building": building,
