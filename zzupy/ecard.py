@@ -9,8 +9,8 @@ import gmalg
 from typing_extensions import Tuple
 from loguru import logger
 
-from zzupy.exception import DefaultRoomException, ECardTokenException, PermissionException
-from zzupy.utils import sm4_decrypt_ecb
+from zzupy.exception import DefaultRoomException, ECardTokenException
+from zzupy.utils import sm4_decrypt_ecb, check_permission
 
 
 class eCard:
@@ -116,6 +116,7 @@ class eCard:
 
         :returns: 默认的房间
         """
+        check_permission(self._parent)
         logger.debug("尝试获取默认 room")
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -167,6 +168,7 @@ class eCard:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
+        check_permission(self._parent)
         room = self.get_default_room() if room is None else room
 
         headers = {
@@ -236,6 +238,7 @@ class eCard:
         :return: 校园卡余额
         :rtype: float
         """
+        check_permission(self._parent)
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
@@ -264,6 +267,7 @@ class eCard:
         :rtype: dict
         """
 
+        check_permission(self._parent)
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -314,6 +318,7 @@ class eCard:
         :rtype: dict
         """
 
+        check_permission(self._parent)
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -365,6 +370,7 @@ class eCard:
         :rtype: dict
         """
 
+        check_permission(self._parent)
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -416,6 +422,8 @@ class eCard:
         :return: 房间字典
         :rtype: dict
         """
+
+        check_permission(self._parent)
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -465,6 +473,8 @@ class eCard:
         :return: 剩余电量
         :rtype: float
         """
+
+        check_permission(self._parent)
         room = self.get_default_room() if room is None else room
 
         headers = {

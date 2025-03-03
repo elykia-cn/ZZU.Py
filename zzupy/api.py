@@ -56,6 +56,12 @@ class ZZUPy:
         logger.debug("已配置类")
         logger.info(f"账户 {usercode} 初始化完成")
 
+    def is_logged_in(self) -> bool:
+        if self._isLogged:
+            return True
+        else:
+            return False
+
     def set_device_params(self, **kwargs: Unpack[DeviceParams]):
         """
         设置设备参数。这些参数都需要抓包获取，但其实可有可无，因为目前并没有观察到相关风控机制
@@ -123,7 +129,7 @@ class ZZUPy:
                 logger.error(
                     "从 /passwordLogin 请求中提取 userToken 和 refreshToken 失败"
                 )
-                raise LoginException from exc
+                raise LoginException("登录失败, 通过 DEBUG 日志获得更多信息") from exc
         else:
             logger.info(f"userToken 已设置，跳过帐密登录")
 
@@ -176,7 +182,8 @@ class ZZUPy:
             logger.error(
                 "从 /login-token 请求中提取 dynamicSecret 、 dynamicToken 和用户信息失败"
             )
-            raise LoginException from exc
+            raise LoginException("登录失败, 通过 DEBUG 日志获得更多信息") from exc
+        self.eCard._start_token_refresh_timer()
         self._isLogged = True
         logger.info(f"账户 {self._usercode} 登录成功")
         return self._usercode, self._name
