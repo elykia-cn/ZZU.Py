@@ -1,5 +1,6 @@
 import base64
 import json
+import threading
 import time
 import warnings
 
@@ -18,8 +19,15 @@ class eCard:
         self._eCardAccessToken = ""
         self._JSessionID = ""
         self._tid = ""
+        self._start_token_refresh_timer()
 
-    def _get_eacrd_access_token(self):
+    def _start_token_refresh_timer(self):
+        self._get_ecard_access_token()
+        # 每 45 分钟（2700 秒）执行一次
+        self._timer = threading.Timer(2700, self._start_token_refresh_timer)
+        self._timer.start()
+
+    def _get_ecard_access_token(self):
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",

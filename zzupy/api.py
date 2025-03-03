@@ -41,11 +41,7 @@ class ZZUPy:
         self._usercode = usercode
         self._password = password
         logger.debug(f"已配置账户 {usercode}")
-        # 初始化类
-        self.Network = Network(self)
-        self.eCard = eCard(self)
-        self.Supwisdom = Supwisdom(self)
-        logger.debug("已配置类")
+        # 初始化 HTTPX
         self._client = httpx.Client(follow_redirects=True)
         if cookies is not None:
             self._client.cookies.set(
@@ -53,6 +49,11 @@ class ZZUPy:
             )
             self._userToken = cookies["userToken"]
         logger.debug("已配置 HTTPX 实例")
+        # 初始化类
+        self.Network = Network(self)
+        self.eCard = eCard(self)
+        self.Supwisdom = Supwisdom(self)
+        logger.debug("已配置类")
         logger.info(f"账户 {usercode} 初始化完成")
 
     def set_device_params(self, **kwargs: Unpack[DeviceParams]):
@@ -177,6 +178,5 @@ class ZZUPy:
             )
             raise LoginException from exc
         self._isLogged = True
-        self.eCard._get_eacrd_access_token()
         logger.info(f"账户 {self._usercode} 登录成功")
         return self._usercode, self._name
