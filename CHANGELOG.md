@@ -1,6 +1,54 @@
 # CHANGELOG
 
 
+## v2.1.0 (2025-03-03)
+
+### Bug Fixes
+
+- Forgot to delete the httpx top-level API
+  ([`4a94ff5`](https://github.com/Illustar0/ZZU.Py/commit/4a94ff56b672b33eee2af6d651fe4a40e744afa7))
+
+- Prevent program exit from being blocked
+  ([`cdebda4`](https://github.com/Illustar0/ZZU.Py/commit/cdebda4d37d408e0fef808d8cd4b5dc31426b5b3))
+
+- Wrong location_type in headers
+  ([`30017fa`](https://github.com/Illustar0/ZZU.Py/commit/30017fa4e0a76f60dfbe0630dd7aa1a8b8507f55))
+
+### Features
+
+- Automatically refresh ecard_access_token
+  ([`d7770d9`](https://github.com/Illustar0/ZZU.Py/commit/d7770d9715a3344e67193ba1396ebe608f4939c7))
+
+- More detailed exceptions
+  ([`da19688`](https://github.com/Illustar0/ZZU.Py/commit/da19688c8c4dec44aa10b4b22eebf4de9ae570ab))
+
+- Perform permission check before operation
+  ([`6378e4a`](https://github.com/Illustar0/ZZU.Py/commit/6378e4a2d9b9733b9b81e59715e6a66003f65031))
+
+### Performance Improvements
+
+- Reduce duplication of code
+  ([`53b6844`](https://github.com/Illustar0/ZZU.Py/commit/53b68444fe8cc559d35c0dc2bae88fce6104a30e))
+
+Reduce duplication of code and use some more elegant approach
+
+- Remove unused functions
+  ([`b07c0af`](https://github.com/Illustar0/ZZU.Py/commit/b07c0af4365e3754c547b73598c14e874bd4d92a))
+
+Removed get_area_dict(), get_building_dict(), and get_unit_dict(), and integrated their
+  functionality into get_room_dict()
+
+DEPRECATED: all get_*_dict() except get_room_dict() are deprecated
+
+The code for get_*_dict() is highly duplicated, so their functionality has been merged into
+  get_room_dict(). From now on you should only use get_room_dict()
+
+### Refactoring
+
+- Format code
+  ([`d70974f`](https://github.com/Illustar0/ZZU.Py/commit/d70974f223c736cfe9ef7360573428e974241062))
+
+
 ## v2.0.1 (2025-03-02)
 
 ### Bug Fixes
