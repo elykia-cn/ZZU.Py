@@ -25,6 +25,7 @@ class eCard:
         self._get_ecard_access_token()
         # 每 45 分钟（2700 秒）执行一次
         self._timer = threading.Timer(2700, self._start_token_refresh_timer)
+        self._timer.daemon = True
         self._timer.start()
 
     def _get_ecard_access_token(self):
