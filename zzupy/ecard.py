@@ -159,7 +159,7 @@ class eCard:
         """
         为 room 充值电费
 
-        :param str room: 宿舍房间。理论上空调和照明均支持.格式应为 “areaid-buildingid--unitid-roomid”，可通过get_area_dict(),get_building_dict(),get_unit_dict(),get_room_dict()获取
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
         :param str payment_password: 支付密码
         :param int amt: 充值金额
         :returns: Tuple[bool, str]
@@ -259,171 +259,28 @@ class eCard:
         )
         return float(json.loads(response.text)["data"][1]["amount"])
 
-    def get_area_dict(self) -> dict:
-        """
-        获取区域的字典
-
-        :return: 区域字典
-        :rtype: dict
-        """
-
-        check_permission(self._parent)
-        headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Content-Type": "application/json",
-            "sec-ch-ua-platform": '"Android"',
-            "Authorization": self._eCardAccessToken,
-            "sec-ch-ua": '"Android WebView";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-            "sec-ch-ua-mobile": "?1",
-            "Origin": "https://ecard.v.zzu.edu.cn",
-            "X-Requested-With": "com.supwisdom.zzu",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
-            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
-
-        data = {
-            "utilityType": "electric",
-            "locationType": "bigArea",
-            "bigArea": "",
-            "area": "",
-            "building": "",
-            "unit": "",
-            "level": "",
-            "room": "",
-            "subArea": "",
-        }
-
-        response = self._parent._client.post(
-            "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            headers=headers,
-            json=data,
-        )
-        AreaDict = {}
-        for i in range(len(json.loads(response.text)["resultData"]["locationList"])):
-            AreaDict[
-                json.loads(response.text)["resultData"]["locationList"][i]["id"]
-            ] = json.loads(response.text)["resultData"]["locationList"][i]["name"]
-        return AreaDict
-
-    def get_building_dict(self, areaid: str) -> dict:
-        """
-        获取建筑的字典
-
-        :param str areaid: 通过get_area_dict()获取
-        :return: 建筑字典
-        :rtype: dict
-        """
-
-        check_permission(self._parent)
-        headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Content-Type": "application/json",
-            "sec-ch-ua-platform": '"Android"',
-            "Authorization": self._eCardAccessToken,
-            "sec-ch-ua": '"Android WebView";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-            "sec-ch-ua-mobile": "?1",
-            "Origin": "https://ecard.v.zzu.edu.cn",
-            "X-Requested-With": "com.supwisdom.zzu",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
-            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
-
-        data = {
-            "utilityType": "electric",
-            "locationType": "building",
-            "bigArea": "",
-            "area": areaid,
-            "building": "",
-            "unit": "",
-            "level": "",
-            "room": "",
-            "subArea": "",
-        }
-
-        response = self._parent._client.post(
-            "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            headers=headers,
-            json=data,
-        )
-        BuildingDict = {}
-        for i in range(len(json.loads(response.text)["resultData"]["locationList"])):
-            BuildingDict[
-                json.loads(response.text)["resultData"]["locationList"][i]["id"]
-            ] = json.loads(response.text)["resultData"]["locationList"][i]["name"]
-        return BuildingDict
-
-    def get_unit_dict(self, areaid: str, buildingid: str) -> dict:
-        """
-        获取照明/空调的字典
-
-        :param str areaid: 通过get_unit_dict()获取
-        :param str buildingid: 通过get_building_dict()获取
-        :return: 照明/空调字典
-        :rtype: dict
-        """
-
-        check_permission(self._parent)
-        headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
-            "Accept-Encoding": "gzip, deflate, br, zstd",
-            "Content-Type": "application/json",
-            "sec-ch-ua-platform": '"Android"',
-            "Authorization": self._eCardAccessToken,
-            "sec-ch-ua": '"Android WebView";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
-            "sec-ch-ua-mobile": "?1",
-            "Origin": "https://ecard.v.zzu.edu.cn",
-            "X-Requested-With": "com.supwisdom.zzu",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
-            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        }
-
-        data = {
-            "utilityType": "electric",
-            "locationType": "unit",
-            "bigArea": "",
-            "area": areaid,
-            "building": buildingid,
-            "unit": "",
-            "level": "",
-            "room": "",
-            "subArea": "",
-        }
-
-        response = self._parent._client.post(
-            "https://ecard.v.zzu.edu.cn/server/utilities/location",
-            headers=headers,
-            json=data,
-        )
-        UnitDict = {}
-        for i in range(len(json.loads(response.text)["resultData"]["locationList"])):
-            UnitDict[
-                json.loads(response.text)["resultData"]["locationList"][i]["id"]
-            ] = json.loads(response.text)["resultData"]["locationList"][i]["name"]
-        return UnitDict
-
-    def get_room_dict(self, areaid: str, buildingid: str, unitid: str) -> dict:
+    def get_room_dict(self, id: str) -> dict:
         """
         获取房间的字典
 
-        :param str areaid: 通过get_area_dict()获取
-        :param str buildingid: 通过get_building_dict()获取
-        :param str unitid: 通过get_unit_dict()获取
-        :return: 房间字典
+        :param str id: 已知房间 ID 。例如: '', '99', '99-12', '99-12--33'
+        :return: 对应的字典
         :rtype: dict
         """
 
         check_permission(self._parent)
+        num=id.count("-")
+        if num==0:
+            area=building=level=""
+        elif num==1:
+            area,building=id.split("-")
+            level=""
+        elif num==3:
+            area,building=id.split("--")[0].split("-")
+            level=id.split("--")[1]
+        else:
+            raise ValueError("参数不合法")
+
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -445,10 +302,10 @@ class eCard:
             "utilityType": "electric",
             "locationType": "room",
             "bigArea": "",
-            "area": areaid,
-            "building": buildingid,
+            "area": area,
+            "building": building,
             "unit": "",
-            "level": unitid,
+            "level": level,
             "room": "",
             "subArea": "",
         }
@@ -469,8 +326,8 @@ class eCard:
         """
         获取剩余电量
 
-        :param str room: 格式应为 “areaid-buildingid--unitid-roomid”，可通过get_area_dict(),get_building_dict(),get_unit_dict(),get_room_dict()获取
-        :return: 剩余电量
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :return: 剩余能源
         :rtype: float
         """
 
