@@ -3,32 +3,35 @@ import json
 import threading
 import time
 import warnings
+from urllib.parse import urlparse,parse_qs
 
 import httpx
 import gmalg
 from typing_extensions import Tuple
 from loguru import logger
 
-from zzupy.exception import LoginException
+from zzupy.exception import DefaultRoomException, ECardTokenException, PermissionException
 from zzupy.utils import sm4_decrypt_ecb
 
 
 class eCard:
     def __init__(self, parent):
         self._parent = parent
-        self._eCardAccessToken = ""
-        self._JSessionID = ""
-        self._tid = ""
-        self._start_token_refresh_timer()
+        self._eCardAccessToken = None
+        self._eCardRefreshToken = None
+        self._JSessionID = None
+        self._tid = None
+        self._orgId = None
 
     def _start_token_refresh_timer(self):
-        self._get_ecard_access_token()
+        self._JSessionID, self._tid, self._orgId = self._get_jsession_id()
+        self._eCardAccessToken, self._eCardRefreshToken = self._get_ecard_access_token()
         # 每 45 分钟（2700 秒）执行一次
         self._timer = threading.Timer(2700, self._start_token_refresh_timer)
         self._timer.daemon = True
         self._timer.start()
 
-    def _get_ecard_access_token(self):
+    def _get_jsession_id(self):
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -60,14 +63,18 @@ class eCard:
         )
         logger.debug(f"/auth/host/open 请求响应头：{response.headers}")
         try:
-            self._JSessionID = (
-                response.headers["set-cookie"].split("=")[1].split(";")[0]
+            return (
+                response.cookies.get("JSESSIONID"),
+                parse_qs(urlparse(response.headers["location"]).query)["tid"][0],
+                parse_qs(urlparse(response.headers["location"]).query)["orgId"][0],
             )
-            self._tid = response.headers["location"].split("=")[1].split("&")[0]
         except Exception as exc:
-            logger.error("从 /auth/host/open 请求中提取 JSessionID 和 tid 失败")
-            raise LoginException from exc
+            logger.error("获取 JSessionID 和 tid 失败")
+            raise ECardTokenException(
+                "获取 JSessionID 和 tid 失败, 通过 DEBUG 日志获得更多信息"
+            ) from exc
 
+    def _get_ecard_access_token(self):
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -80,24 +87,71 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
         data = {
             "tid": self._tid,
         }
-
+        logger.debug(headers)
         response = self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/auth/getToken",
             headers=headers,
             json=data,
         )
         logger.debug(f"/auth/getToken 请求响应体：{response.text}")
-        self._eCardAccessToken = json.loads(response.text)["resultData"]["accessToken"]
-        self._eCardRefreshToken = json.loads(response.text)["resultData"][
-            "refreshToken"
-        ]
+        try:
+            return json.loads(response.text)["resultData"]["accessToken"], json.loads(
+                response.text
+            )["resultData"]["refreshToken"]
+        except Exception as exc:
+            logger.error("获取 eCardAccessToken 失败")
+            raise ECardTokenException(
+                "获取 eCardAccessToken 失败, 通过 DEBUG 日志获得更多信息"
+            ) from exc
+
+    def get_default_room(self) -> str:
+        """
+        获取账户默认房间
+
+        :returns: 默认的房间
+        """
+        logger.debug("尝试获取默认 room")
+        headers = {
+            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "Content-Type": "application/json",
+            "sec-ch-ua-platform": '"Android"',
+            "Authorization": self._eCardAccessToken,
+            "sec-ch-ua": '"Not(A:Brand";v="99", "Android WebView";v="133", "Chromium";v="133"',
+            "sec-ch-ua-mobile": "?1",
+            "Origin": "https://ecard.v.zzu.edu.cn",
+            "X-Requested-With": "com.supwisdom.zzu",
+            "Sec-Fetch-Site": "same-origin",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Dest": "empty",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
+            "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+        }
+
+        data = {
+            "utilityType": "electric",
+        }
+
+        response = self._parent._client.post(
+            "https://ecard.v.zzu.edu.cn/server/utilities/config",
+            headers=headers,
+            json=data,
+        )
+        try:
+            room = json.loads(response.text)["resultData"]["location"]["room"]
+            logger.debug(f"默认 room 为 {room}")
+            return room
+        except Exception as exc:
+            logger.error("获取默认 room 失败")
+            raise DefaultRoomException(
+                "获取默认 room 失败, 通过 DEBUG 日志获得更多信息"
+            ) from exc
 
     def recharge_energy(
         self, payment_password: str, amt: int, room: str | None = None
@@ -114,36 +168,7 @@ class eCard:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
-        if room is None:
-            headers = {
-                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
-                + "SuperApp",
-                "Content-Type": "application/json",
-                "sec-ch-ua-platform": '"Android"',
-                "Authorization": self._eCardAccessToken,
-                "sec-ch-ua": '"Not(A:Brand";v="99", "Android WebView";v="133", "Chromium";v="133"',
-                "sec-ch-ua-mobile": "?1",
-                "Origin": "https://ecard.v.zzu.edu.cn",
-                "X-Requested-With": "com.supwisdom.zzu",
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Dest": "empty",
-                "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
-                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-            }
-
-            data = {
-                "utilityType": "electric",
-            }
-
-            response = self._parent._client.post(
-                "https://ecard.v.zzu.edu.cn/server/utilities/config",
-                headers=headers,
-                json=data,
-            )
-            logger.debug(f"/utilities/config 请求响应体：{response.text}")
-            logger.debug("尝试获取默认 room")
-            room = json.loads(response.text)["resultData"]["location"]["room"]
+        room = self.get_default_room() if room is None else room
 
         headers = {
             "Accept": "*/*",
@@ -154,7 +179,7 @@ class eCard:
             "Content-Type": "application/json",
             "Origin": "https://ecard.v.zzu.edu.cn",
             "Pragma": "no-cache",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
@@ -253,7 +278,7 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
@@ -303,7 +328,7 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
@@ -354,7 +379,7 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
@@ -405,7 +430,7 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
@@ -441,36 +466,7 @@ class eCard:
         :return: 剩余电量
         :rtype: float
         """
-        if room is None:
-            headers = {
-                "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
-                + "SuperApp",
-                "Content-Type": "application/json",
-                "sec-ch-ua-platform": '"Android"',
-                "Authorization": self._eCardAccessToken,
-                "sec-ch-ua": '"Not(A:Brand";v="99", "Android WebView";v="133", "Chromium";v="133"',
-                "sec-ch-ua-mobile": "?1",
-                "Origin": "https://ecard.v.zzu.edu.cn",
-                "X-Requested-With": "com.supwisdom.zzu",
-                "Sec-Fetch-Site": "same-origin",
-                "Sec-Fetch-Mode": "cors",
-                "Sec-Fetch-Dest": "empty",
-                "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
-                "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-            }
-
-            data = {
-                "utilityType": "electric",
-            }
-
-            response = self._parent._client.post(
-                "https://ecard.v.zzu.edu.cn/server/utilities/config",
-                headers=headers,
-                json=data,
-            )
-            logger.debug(f"/utilities/config 请求响应体：{response.text}")
-            logger.debug("尝试获取默认 room")
-            room = json.loads(response.text)["resultData"]["location"]["room"]
+        room = self.get_default_room() if room is None else room
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -485,7 +481,7 @@ class eCard:
             "Sec-Fetch-Site": "same-origin",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Dest": "empty",
-            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&orgId=2",
+            "Referer": f"https://ecard.v.zzu.edu.cn/?tid={self._tid}&{self._orgId}",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
 
