@@ -25,8 +25,11 @@ class ZZUPy:
 
         :param str usercode: 学号
         :param str password: 密码
+        :param SimpleCookie cookie: 统一认证 Cookie。目前必须包含 'userToken'，否则会抛出 ValueError
+        :raises ValueError: Cookie 中缺少 'userToken' 时抛出
         """
         self._userToken = None
+        # 固定值
         self._dynamicSecret = "supwisdom_eams_app_secret"
         self._dynamicToken = None
         self._refreshToken = None
@@ -47,9 +50,9 @@ class ZZUPy:
         if cookie is SimpleCookie:
             for key, morsel in cookie.items():
                 self._client.cookies.set(
-                key, morsel.value, morsel['domain'], morsel['path']
+                    key, morsel.value, morsel["domain"], morsel["path"]
                 )
-                if key =="userToken":
+                if key == "userToken":
                     self._userToken = morsel.value
             if self._userToken is None:
                 raise ValueError("Cookie 中缺少 'userToken'")
@@ -62,6 +65,11 @@ class ZZUPy:
         logger.info(f"账户 {usercode} 初始化完成")
 
     def is_logged_in(self) -> bool:
+        """
+        判断是否已登录
+        :return: 是否已登录
+        :rtype: bool
+        """
         if self._isLogged:
             return True
         else:
@@ -101,7 +109,7 @@ class ZZUPy:
         """
         登录
 
-        :param str appVersion: APP 版本 ，一般类似 "SWSuperApp/1.0.38" ，可自行更新版本号，但详细数据需要抓包获取,位于 "passwordLogin" 请求的 User-Agent 中，也可随便填或空着，目前没有观察到相关风控机制。
+        :param str appVersion: APP 版本 ，一般类似 "SWSuperApp/1.0.38" ，可自行更新版本号。
         :param str appId: APP 包名，一般不需要修改
         :param str osType: 系统类型，一般不需要修改
         :returns: Tuple[str, str]
@@ -109,6 +117,7 @@ class ZZUPy:
             - **usercode** (str) – 学号
             - **name** (str) – 姓名
         :rtype: Tuple[str,str]
+        :raises LoginException: 登录失败时抛出
         """
         logger.info(f"尝试登录账户 {self._usercode}")
         if self._client.cookies.get("userToken") is None:
