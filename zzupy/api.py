@@ -5,6 +5,7 @@ import json
 import base64
 import time
 from typing_extensions import Unpack, Tuple
+from http.cookies import SimpleCookie
 from loguru import logger
 
 from zzupy.typing import DeviceParams
@@ -17,7 +18,7 @@ from zzupy.exception import LoginException
 
 class ZZUPy:
     def __init__(
-        self, usercode: str, password: str, cookies: dict[str, str] | None = None
+        self, usercode: str, password: str, cookie: SimpleCookie | None = None
     ):
         """
         初始化一个 ZZUPy 对象
@@ -43,11 +44,15 @@ class ZZUPy:
         logger.debug(f"已配置账户 {usercode}")
         # 初始化 HTTPX
         self._client = httpx.Client(follow_redirects=True)
-        if cookies is not None:
-            self._client.cookies.set(
-                "userToken", cookies["userToken"], ".zzu.edu.cn", "/"
-            )
-            self._userToken = cookies["userToken"]
+        if cookie is SimpleCookie:
+            for key, morsel in cookie.items():
+                self._client.cookies.set(
+                key, morsel.value, morsel['domain'], morsel['path']
+                )
+                if key =="userToken":
+                    self._userToken = morsel.value
+            if self._userToken is None:
+                raise ValueError("Cookie 中缺少 'userToken'")
         logger.debug("已配置 HTTPX 实例")
         # 初始化类
         self.Network = Network(self)
