@@ -1,6 +1,29 @@
 # CHANGELOG
 
 
+## v3.0.0 (2025-03-05)
+
+### Documentation
+
+- Correct and complete some documents
+  ([`220f1da`](https://github.com/Illustar0/ZZU.Py/commit/220f1daacb9d4c3c559c3cc612fefa238428cd23))
+
+### Features
+
+- Use SimpleCookie as the incoming type
+  ([`286be07`](https://github.com/Illustar0/ZZU.Py/commit/286be07343b08b671797bd3c9397616ad49b850f))
+
+It is obvious that SimpleCookie is a more suitable parameter type than dict.
+
+BREAKING CHANGE: no longer accepting dict type cookies
+
+Please use SimpleCookie
+
+### Breaking Changes
+
+- No longer accepting dict type cookies
+
+
 ## v2.1.0 (2025-03-03)
 
 ### Bug Fixes
