@@ -15,6 +15,7 @@ def configure_logging(
     log_format: str = "<green>{time:YYYY-MM-DD HH:mm:ss}</green> - <lvl>{level:^8}</> - <cyan>{name:^12}</cyan> : <cyan>{module:^7}</cyan> : <cyan>{line:^4}</cyan> - <lvl>{message}</>",
 ) -> logger:
     """
+    配置日志记录器。
 
     :param enable: 是否启用日志记录
     :param level: 日志级别 ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")

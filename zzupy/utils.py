@@ -36,6 +36,12 @@ def _kget(kwargs, key, default=None):
 
 
 def get_ip_by_interface(interface):
+    """
+    获取指定网卡的IP地址
+
+    :param interface: 网卡名称
+    :return: 给定王卡的 IP 地址
+    """
     addresses = psutil.net_if_addrs()
     if interface in addresses:
         for addr in addresses[interface]:
@@ -45,6 +51,11 @@ def get_ip_by_interface(interface):
 
 
 def get_default_interface():
+    """
+    获取默认网卡的名称
+
+    :return: 默认网卡的名称
+    """
     net_if_addrs = psutil.net_if_addrs()
     net_if_stats = psutil.net_if_stats()
     for interface, addrs in net_if_addrs.items():
@@ -75,6 +86,11 @@ def sm4_decrypt_ecb(ciphertext: bytes, key: bytes):
 
 
 def check_permission(self):
+    """
+    检查用户是否登录
+
+    :param self:
+    """
     if self.is_logged_in():
         pass
     else:

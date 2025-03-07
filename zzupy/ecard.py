@@ -23,6 +23,9 @@ class eCard:
         self._orgId = None
 
     def _start_token_refresh_timer(self):
+        """
+        启动定时器，定时刷新 token
+        """
         self._JSessionID, self._tid, self._orgId = self._get_jsession_id()
         self._eCardAccessToken, self._eCardRefreshToken = self._get_ecard_access_token()
         # 每 45 分钟（2700 秒）执行一次
@@ -30,7 +33,18 @@ class eCard:
         self._timer.daemon = True
         self._timer.start()
 
-    def _get_jsession_id(self):
+    def _get_jsession_id(self) -> Tuple[str, str, str]:
+        """
+        获取 JSESSIONID, tid 和 orgId
+
+        :returns: Tuple[str, str, str]
+
+            - **JSESSIONID** (str) – JSESSIONID
+            - **tid** (str) – tid
+            - **orgId** (str) – orgId
+        :rtype: Tuple[str,str, str]
+        :raises ECardTokenException: 获取 JSESSIONID, tid 或 orgId 失败时抛出
+        """
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -74,6 +88,9 @@ class eCard:
             ) from exc
 
     def _get_ecard_access_token(self):
+        """
+        获取 ecard access token
+        """
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -379,6 +396,15 @@ class eCard:
         )
 
     def get_remaining_power(self, room: str | None = None) -> float:
+        """
+        获取剩余电量
+
+        已被废弃，请使用 get_remaining_energy()
+
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :return: 剩余能源
+        :rtype: float
+        """
         logger.warning("get_remaining_power() 已废弃，请使用 get_remaining_energy()")
         warnings.warn(
             "get_remaining_power() is deprecated, please use get_remaining_energy()",
@@ -389,6 +415,20 @@ class eCard:
     def recharge_electricity(
         self, payment_password: str, amt: int, room: str | None = None
     ) -> Tuple[bool, str]:
+        """
+        为 room 充值电费
+
+        已被废弃，请使用 recharge_energy()
+
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :param str payment_password: 支付密码
+        :param int amt: 充值金额
+        :returns: Tuple[bool, str]
+
+            - **success** (bool) – 充值是否成功
+            - **msg** (str) – 服务端返回信息。
+        :rtype: Tuple[bool,str]
+        """
         logger.warning("recharge_electricity() 已废弃，请使用 recharge_energy()")
         warnings.warn(
             "recharge_electricity() is deprecated, please use recharge_energy()",

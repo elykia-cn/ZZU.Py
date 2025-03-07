@@ -67,6 +67,7 @@ class ZZUPy:
     def is_logged_in(self) -> bool:
         """
         判断是否已登录
+
         :return: 是否已登录
         :rtype: bool
         """
