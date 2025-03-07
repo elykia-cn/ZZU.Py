@@ -6,4 +6,4 @@ class DeviceParams(TypedDict):
     deviceId: str
     deviceInfo: str
     deviceInfos: str
-    userAgentPrecursor: int
+    userAgentPrecursor: str
