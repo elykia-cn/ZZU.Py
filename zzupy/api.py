@@ -141,7 +141,7 @@ class ZZUPy:
         app_version: str = DEFAULT_APP_VERSION,
         app_id: str = DEFAULT_APP_ID,
         os_type: str = DEFAULT_OS_TYPE,
-    ) -> tuple[str, str | None]:
+    ) -> UserInfo:
         """
         登录
 
@@ -169,8 +169,7 @@ class ZZUPy:
         self._isLogged = True
         logger.info(f"账户 {self._usercode} 登录成功")
 
-        # return {"usercode": self._usercode, "name": self._name}
-        return self._usercode, self._name
+        return {"usercode": self._usercode, "name": self._name}
 
     async def _password_login(
         self, app_version: str, app_id: str, os_type: str
