@@ -257,3 +257,7 @@ class ZZUPy:
         except Exception as exc:
             logger.error("从 /login-token 请求中提取数据失败")
             raise LoginException("登录失败，请查看 DEBUG 日志获取详细信息") from exc
+
+    def get_user_token(self) -> str:
+        """获取本次会话的 userToken"""
+        return self._userToken
