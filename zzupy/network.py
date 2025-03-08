@@ -4,36 +4,50 @@ import time
 import httpx
 import re
 import json
+import asyncio
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
-from typing_extensions import Tuple
+from typing import Dict, List, Optional, Tuple, Union, Any
+from functools import wraps
 
-from zzupy.utils import get_ip_by_interface, get_default_interface
+from zzupy.utils import get_ip_by_interface, get_default_interface, sync_wrapper
 
 
 class Network:
     def __init__(self, parent):
+        """
+        初始化网络管理类
+
+        :param parent: 父对象，通常是ZZUPy实例
+        """
         self._parent = parent
         self.account = self._parent._usercode
-        self._JSessionID = ""
-        self._checkcode = ""
-        self.system_ua = ""
-        self.system_loginurl = ""
+        self._JSessionID: str = ""
+        self._checkcode: str = ""
+        self.system_ua: str = ""
+        self.system_loginurl: str = ""
+        # 默认请求头
+        self._default_headers = {
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Connection": "keep-alive",
+        }
 
     def portal_auth(
         self,
         interface: str = get_default_interface(),
-        authurl="http://10.2.7.8:801",
-        ua=UserAgent().random,
-        isp="campus",
+        authurl: str = "http://10.2.7.8:801",
+        ua: str = None,
+        isp: str = "campus",
     ) -> Tuple[str, bool, str]:
         """
         进行校园网认证
 
         :param str interface: 网络接口名
         :param str authurl: PortalAuth 服务器。根据情况修改
-        :param str ua: User-Agent
-        :param str isp: 运营商。可选项：campus,cm
+        :param str ua: User-Agent，默认随机生成
+        :param str isp: 运营商。可选项：campus,cm,ct,cu
         :returns: Tuple[str, bool, str]
 
             - **interface** (str) – 本次认证调用的网络接口。
@@ -41,36 +55,76 @@ class Network:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[str,bool,str]
         """
+        return sync_wrapper(self.portal_auth_async)(interface, authurl, ua, isp)
+
+    async def portal_auth_async(
+        self,
+        interface: str = get_default_interface(),
+        authurl: str = "http://10.2.7.8:801",
+        ua: str = None,
+        isp: str = "campus",
+    ) -> Tuple[str, bool, str]:
+        """
+        异步进行校园网认证
+
+        :param str interface: 网络接口名
+        :param str authurl: PortalAuth 服务器。根据情况修改
+        :param str ua: User-Agent，默认随机生成
+        :param str isp: 运营商。可选项：campus,cm,ct,cu
+        :returns: Tuple[str, bool, str]
+
+            - **interface** (str) – 本次认证调用的网络接口。
+            - **success** (bool) – 认证是否成功。(不可信，有时失败仍可正常上网)
+            - **msg** (str) – 服务端返回信息。
+        :rtype: Tuple[str,bool,str]
+        """
+        if ua is None:
+            ua = UserAgent().random
+
+        # 设置账号格式
         if isp == "campus":
             self.account = self._parent._usercode
         elif isp == "ct":
-            self.account = self._parent._usercode + "@cmcc"
+            self.account = f"{self._parent._usercode}@cmcc"
         elif isp == "cu":
-            self.account = self._parent._usercode + "@cmcc"
+            self.account = f"{self._parent._usercode}@cmcc"
         elif isp == "cm":
-            self.account = self._parent._usercode + "@cmcc"
+            self.account = f"{self._parent._usercode}@cmcc"
         else:
             self.account = self._parent._usercode
-        transport = httpx.HTTPTransport(local_address=get_ip_by_interface(interface))
-        local_client = httpx.Client(transport=transport)
-        self._chkstatus(local_client, authurl, ua)
-        self._loadConfig(local_client, interface, authurl, ua)
-        return self._auth(local_client, interface, authurl, ua)
 
-    def _auth(
+        # 创建带有本地IP的异步客户端
+        transport = httpx.AsyncHTTPTransport(
+            local_address=get_ip_by_interface(interface)
+        )
+        async with httpx.AsyncClient(transport=transport) as local_client:
+            await self._chkstatus_async(local_client, authurl, ua)
+            await self._loadConfig_async(local_client, interface, authurl, ua)
+            return await self._auth_async(local_client, interface, authurl, ua)
+
+    async def _auth_async(
         self,
-        client,
-        interface,
-        baseURL,
-        ua,
-    ):
+        client: httpx.AsyncClient,
+        interface: str,
+        baseURL: str,
+        ua: str,
+    ) -> Tuple[str, bool, str]:
+        """
+        异步执行认证请求
+
+        :param client: httpx异步客户端
+        :param interface: 网络接口
+        :param baseURL: 认证服务器基础URL
+        :param ua: User-Agent
+        :return: 认证结果元组
+        """
         headers = {
+            **self._default_headers,
             "Accept": "*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Connection": "keep-alive",
             "Referer": "http://10.2.7.8/",
             "User-Agent": ua,
         }
+
         params = [
             ("callback", "dr1003"),
             ("login_method", "1"),
@@ -90,22 +144,30 @@ class Network:
             ("v", str(random.randint(500, 10499))),
             ("lang", "zh"),
         ]
-        response = client.get(
-            f"{baseURL}/eportal/portal/login", params=params, headers=headers
-        )
-        res_json = json.loads(re.findall(r"dr1003\((.*?)\);", response.text)[0])
-        if res_json["result"] == 0:
-            success = False
-        else:
-            success = True
-        return interface, success, res_json["msg"]
 
-    # 现在发现可有可无好像
-    def _chkstatus(self, client, baseURL, ua):
+        try:
+            response = await client.get(
+                f"{baseURL}/eportal/portal/login", params=params, headers=headers
+            )
+            res_json = json.loads(re.findall(r"dr1003\((.*?)\);", response.text)[0])
+            success = res_json["result"] != 0
+            return interface, success, res_json["msg"]
+        except Exception as e:
+            return interface, False, f"认证请求失败: {str(e)}"
+
+    async def _chkstatus_async(
+        self, client: httpx.AsyncClient, baseURL: str, ua: str
+    ) -> None:
+        """
+        异步检查状态
+
+        :param client: httpx异步客户端
+        :param baseURL: 认证服务器基础URL
+        :param ua: User-Agent
+        """
         headers = {
+            **self._default_headers,
             "Accept": "*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Connection": "keep-alive",
             "Referer": "http://10.2.7.8/a79.htm",
             "User-Agent": ua,
         }
@@ -116,17 +178,31 @@ class Network:
             "v": str(random.randint(500, 10499)),
             "lang": "zh",
         }
-        client.get(
-            re.sub(r":\d+", "", baseURL) + "/drcom/chkstatus",
-            params=params,
-            headers=headers,
-        )
 
-    def _loadConfig(self, client, interface, baseURL, ua):
+        try:
+            await client.get(
+                re.sub(r":\d+", "", baseURL) + "/drcom/chkstatus",
+                params=params,
+                headers=headers,
+            )
+        except Exception:
+            # 忽略错误，因为这个请求可能不是必需的
+            pass
+
+    async def _loadConfig_async(
+        self, client: httpx.AsyncClient, interface: str, baseURL: str, ua: str
+    ) -> None:
+        """
+        异步加载配置
+
+        :param client: httpx异步客户端
+        :param interface: 网络接口
+        :param baseURL: 认证服务器基础URL
+        :param ua: User-Agent
+        """
         headers = {
+            **self._default_headers,
             "Accept": "*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Connection": "keep-alive",
             "Referer": "http://10.2.7.8/",
             "User-Agent": ua,
         }
@@ -148,115 +224,149 @@ class Network:
             "v": str(random.randint(500, 10499)),
             "lang": "zh",
         }
-        client.get(
-            f"{baseURL}/eportal/portal/page/loadConfig", params=params, headers=headers
-        )
 
-    def login(
-        self, loginurl: str = "http://10.2.7.16:8080", ua: str = UserAgent().random
-    ):
+        try:
+            await client.get(
+                f"{baseURL}/eportal/portal/page/loadConfig",
+                params=params,
+                headers=headers,
+            )
+        except Exception:
+            # 忽略错误，因为这个请求可能不是必需的
+            pass
+
+    def login(self, loginurl: str = "http://10.2.7.16:8080", ua: str = None) -> bool:
         """
         登录自助服务平台
 
         :param str loginurl: 自助服务平台的登录 URL
-        :param str ua: User Agent
+        :param str ua: User Agent，默认随机生成
+        :return: 登录是否成功
+        :rtype: bool
         """
+        return sync_wrapper(self.login_async)(loginurl, ua)
+
+    async def login_async(
+        self, loginurl: str = "http://10.2.7.16:8080", ua: str = None
+    ) -> bool:
+        """
+        异步登录自助服务平台
+
+        :param str loginurl: 自助服务平台的登录 URL
+        :param str ua: User Agent，默认随机生成
+        :return: 登录是否成功
+        :rtype: bool
+        """
+        if ua is None:
+            ua = UserAgent().random
+
         self.system_ua = ua
         self.system_loginurl = loginurl
+
+        # 第一步：获取登录页面和JSESSIONID
         headers = {
+            **self._default_headers,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.system_ua,
         }
 
-        response = httpx.get(
-            f"{self.system_loginurl}/Self/login/",
-            headers=headers,
-            verify=False,
-            follow_redirects=False,
-        )
-        self._JSessionID = response.headers["set-cookie"].split("=")[1].split(";")[0]
-        soup = BeautifulSoup(response.text, features="html.parser")
-        self._checkcode = soup.find_all("input", attrs={"name": "checkcode"})[0][
-            "value"
-        ]
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.get(
+                    f"{self.system_loginurl}/Self/login/",
+                    headers=headers,
+                    follow_redirects=False,
+                )
 
-        headers = {
-            "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
-            "Referer": f"{self.system_loginurl}/Self/login/",
-            "User-Agent": self.system_ua,
-        }
+                if response.status_code != 200:
+                    return False
 
-        params = {
-            "t": str(random.random()),
-        }
+                # 提取JSESSIONID
+                self._JSessionID = (
+                    response.headers.get("set-cookie", "").split("=")[1].split(";")[0]
+                )
 
-        httpx.get(
-            f"{self.system_loginurl}/Self/login/randomCode",
-            params=params,
-            cookies=cookies,
-            headers=headers,
-            verify=False,
-        )
+                # 提取checkcode
+                soup = BeautifulSoup(response.text, features="html.parser")
+                checkcode_inputs = soup.find_all("input", attrs={"name": "checkcode"})
+                if not checkcode_inputs:
+                    return False
+                self._checkcode = checkcode_inputs[0]["value"]
 
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": f"{self.system_loginurl}",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
-            "Referer": f"{self.system_loginurl}/Self/login/",
-            "Upgrade-Insecure-Requests": "1",
-            "User-Agent": self.system_ua,
-        }
+                # 第二步：获取验证码图片（可能不是必需的，但保留原有逻辑）
+                cookies = {"JSESSIONID": self._JSessionID}
+                headers = {
+                    **self._default_headers,
+                    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+                    "Referer": f"{self.system_loginurl}/Self/login/",
+                    "User-Agent": self.system_ua,
+                }
 
-        data = {
-            "foo": "",
-            "bar": "",
-            # 我草，太坏了，这个 checkcode 居然是直接动态写死在网页里的，搞得我扣了半天算法抠不出来
-            "checkcode": self._checkcode,
-            "account": self._parent._usercode,
-            "password": self._parent._password,
-            "code": "",
-        }
-        httpx.post(
-            f"{self.system_loginurl}/Self/login/verify;jsessionid={self._JSessionID}",
-            cookies=cookies,
-            headers=headers,
-            data=data,
-            verify=False,
-        )
+                params = {"t": str(random.random())}
 
-    def get_online_devices(self) -> str:
+                await client.get(
+                    f"{self.system_loginurl}/Self/login/randomCode",
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                )
+
+                # 第三步：提交登录表单
+                headers = {
+                    **self._default_headers,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Origin": f"{self.system_loginurl}",
+                    "Referer": f"{self.system_loginurl}/Self/login/",
+                    "Upgrade-Insecure-Requests": "1",
+                    "User-Agent": self.system_ua,
+                }
+
+                data = {
+                    "foo": "",
+                    "bar": "",
+                    "checkcode": self._checkcode,
+                    "account": self._parent._usercode,
+                    "password": self._parent._password,
+                    "code": "",
+                }
+
+                response = await client.post(
+                    f"{self.system_loginurl}/Self/login/verify;jsessionid={self._JSessionID}",
+                    cookies=cookies,
+                    headers=headers,
+                    data=data,
+                )
+
+                # 检查登录是否成功
+                return "dashboard" in response.url.path
+
+        except Exception as e:
+            print(f"登录失败: {str(e)}")
+            return False
+
+    def get_online_devices(self) -> List[Dict[str, Any]]:
         """
         获取全部在线设备
 
-        :return: Json 格式的在线设备数据
-        :rtype: str
+        :return: 在线设备列表
+        :rtype: List[Dict[str, Any]]
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
+        return sync_wrapper(self.get_online_devices_async)()
+
+    async def get_online_devices_async(self) -> List[Dict[str, Any]]:
+        """
+        异步获取全部在线设备
+
+        :return: 在线设备列表
+        :rtype: List[Dict[str, Any]]
+        """
+        cookies = {"JSESSIONID": self._JSessionID}
         headers = {
+            **self._default_headers,
             "Accept": "application/json, text/javascript, */*; q=0.01",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
             "Content-Type": "application/json",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
             "Referer": f"{self.system_loginurl}/Self/dashboard",
             "User-Agent": self.system_ua,
             "X-Requested-With": "XMLHttpRequest",
@@ -268,14 +378,20 @@ class Network:
             "_": str(int(time.time())),
         }
 
-        response = httpx.get(
-            f"{self.system_loginurl}/Self/dashboard/getOnlineList",
-            params=params,
-            cookies=cookies,
-            headers=headers,
-            verify=False,
-        )
-        return response.text
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.get(
+                    f"{self.system_loginurl}/Self/dashboard/getOnlineList",
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                )
+
+                if response.status_code == 200:
+                    return json.loads(response.text)
+                return []
+        except Exception:
+            return []
 
     def get_total_traffic(self) -> int:
         """
@@ -284,81 +400,104 @@ class Network:
         :return: 消耗的流量，单位为 MB
         :rtype: int
         """
+        return sync_wrapper(self.get_total_traffic_async)()
 
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
+    async def get_total_traffic_async(self) -> int:
+        """
+        异步获取消耗的流量
 
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
-            "Referer": f"{self.system_loginurl}/Self/login/",
-            "Upgrade-Insecure-Requests": "1",
-            "User-Agent": self.system_ua,
-        }
-
-        response = httpx.get(
-            f"{self.system_loginurl}/Self/dashboard",
-            cookies=cookies,
-            headers=headers,
-            verify=False,
-        )
-        soup = BeautifulSoup(response.text, features="html.parser")
-        return int(soup.find_all("dt")[1].text.strip().split()[0])
+        :return: 消耗的流量，单位为 MB
+        :rtype: int
+        """
+        dashboard_data = await self._get_dashboard_data_async()
+        if dashboard_data and len(dashboard_data) > 1:
+            try:
+                return int(dashboard_data[1].text.strip().split()[0])
+            except (ValueError, IndexError):
+                return 0
+        return 0
 
     def get_used_time(self) -> int:
         """
         获取使用时间
 
-        :return int: 使用时间，单位为 分钟
+        :return: 使用时间，单位为 分钟
         :rtype: int
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
+        return sync_wrapper(self.get_used_time_async)()
 
+    async def get_used_time_async(self) -> int:
+        """
+        异步获取使用时间
+
+        :return: 使用时间，单位为 分钟
+        :rtype: int
+        """
+        dashboard_data = await self._get_dashboard_data_async()
+        if dashboard_data and len(dashboard_data) > 0:
+            try:
+                return int(dashboard_data[0].text.strip().split()[0])
+            except (ValueError, IndexError):
+                return 0
+        return 0
+
+    async def _get_dashboard_data_async(self) -> List:
+        """
+        异步获取仪表盘数据
+
+        :return: BeautifulSoup找到的dt元素列表
+        """
+        cookies = {"JSESSIONID": self._JSessionID}
         headers = {
+            **self._default_headers,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
             "Referer": f"{self.system_loginurl}/Self/login/",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent": self.system_ua,
         }
 
-        response = httpx.get(
-            f"{self.system_loginurl}/Self/dashboard",
-            cookies=cookies,
-            headers=headers,
-            verify=False,
-        )
-        soup = BeautifulSoup(response.text, features="html.parser")
-        return int(soup.find_all("dt")[0].text.strip().split()[0])
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.get(
+                    f"{self.system_loginurl}/Self/dashboard",
+                    cookies=cookies,
+                    headers=headers,
+                )
+
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, features="html.parser")
+                    return soup.find_all("dt")
+                return []
+        except Exception:
+            return []
 
     def logout_device(self, sessionid: str) -> bool:
         """
+        注销指定设备
 
         :param str sessionid: sessionid,可通过 get_online_devices() 获取
         :return: 成功或失败
         :rtype: bool
         """
-        cookies = {
-            "JSESSIONID": self._JSessionID,
-        }
+        return sync_wrapper(self.logout_device_async)(sessionid)
 
+    async def logout_device_async(self, sessionid: str) -> bool:
+        """
+        异步注销指定设备
+
+        :param str sessionid: sessionid,可通过 get_online_devices_async() 获取
+        :return: 成功或失败
+        :rtype: bool
+        """
+        if not sessionid:
+            return False
+
+        cookies = {"JSESSIONID": self._JSessionID}
         headers = {
+            **self._default_headers,
             "Accept": "*/*",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Proxy-Connection": "keep-alive",
             "Referer": f"{self.system_loginurl}/Self/dashboard",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "User-Agent": self.system_ua,
             "X-Requested-With": "XMLHttpRequest",
         }
 
@@ -367,15 +506,18 @@ class Network:
             "sessionid": sessionid,
         }
 
-        response = httpx.get(
-            f"{self.system_loginurl}/Self/dashboard/tooffline",
-            params=params,
-            cookies=cookies,
-            headers=headers,
-            verify=False,
-        )
-        if response.status_code == 200 and json.loads(response.text)["success"]:
-            return True
-        else:
-            # Log
+        try:
+            async with httpx.AsyncClient(verify=False) as client:
+                response = await client.get(
+                    f"{self.system_loginurl}/Self/dashboard/tooffline",
+                    params=params,
+                    cookies=cookies,
+                    headers=headers,
+                )
+
+                if response.status_code == 200:
+                    result = json.loads(response.text)
+                    return result.get("success", False)
+                return False
+        except Exception:
             return False

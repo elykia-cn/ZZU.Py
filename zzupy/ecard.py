@@ -3,37 +3,79 @@ import json
 import threading
 import time
 import warnings
-from urllib.parse import urlparse, parse_qs
-
 import gmalg
+from urllib.parse import urlparse, parse_qs
 from typing_extensions import Tuple
 from loguru import logger
 
 from zzupy.exception import DefaultRoomException, ECardTokenException
-from zzupy.utils import sm4_decrypt_ecb, check_permission
+from zzupy.utils import sm4_decrypt_ecb, check_permission, sync_wrapper
 
 
 class eCard:
     def __init__(self, parent):
+        """
+        初始化 eCard 实例
+
+        :param parent: 父对象
+        """
         self._parent = parent
-        self._eCardAccessToken = None
-        self._eCardRefreshToken = None
-        self._JSessionID = None
-        self._tid = None
-        self._orgId = None
+        self._eCardAccessToken: str = ""
+        self._eCardRefreshToken: str = ""
+        self._JSessionID: str = ""
+        self._tid: str = ""
+        self._orgId: str = ""
+        self._timer = None
+        # 不再自动启动token刷新定时器，由login方法负责启动
+
+    async def init_async(self):
+        """
+        异步初始化 eCard 实例
+        """
+        self._JSessionID, self._tid, self._orgId = await self._get_jsession_id()
+        (
+            self._eCardAccessToken,
+            self._eCardRefreshToken,
+        ) = await self._get_ecard_access_token()
+        return self
 
     def _start_token_refresh_timer(self):
         """
         启动定时器，定时刷新 token
         """
-        self._JSessionID, self._tid, self._orgId = self._get_jsession_id()
-        self._eCardAccessToken, self._eCardRefreshToken = self._get_ecard_access_token()
+        import asyncio
+
+        # 检查当前是否在事件循环中运行
+        try:
+            loop = asyncio.get_running_loop()
+            # 如果能获取到当前运行的事件循环，说明我们在异步环境中
+            # 使用异步方式初始化token
+            asyncio.create_task(self._start_token_refresh_async())
+            return  # 在异步环境中，定时器由_start_token_refresh_async启动
+        except RuntimeError:
+            # 如果没有运行中的事件循环，说明我们在同步环境中
+            # 创建一个新的事件循环来运行异步函数
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            try:
+                # 运行异步函数并获取结果
+                self._JSessionID, self._tid, self._orgId = loop.run_until_complete(
+                    self._get_jsession_id()
+                )
+                self._eCardAccessToken, self._eCardRefreshToken = (
+                    loop.run_until_complete(self._get_ecard_access_token())
+                )
+            finally:
+                # 关闭事件循环
+                loop.close()
+
         # 每 45 分钟（2700 秒）执行一次
         self._timer = threading.Timer(2700, self._start_token_refresh_timer)
         self._timer.daemon = True
         self._timer.start()
 
-    def _get_jsession_id(self) -> Tuple[str, str, str]:
+    async def _get_jsession_id(self) -> Tuple[str, str, str]:
         """
         获取 JSESSIONID, tid 和 orgId
 
@@ -68,12 +110,14 @@ class eCard:
             "token": self._parent._userToken,
         }
         logger.debug("尝试获取 JSessionID 和 tid")
-        response = self._parent._client.get(
+        logger.debug(f"/auth/host/open 请求头：{headers}")
+        response = await self._parent._client.get(
             "https://ecard.v.zzu.edu.cn/server/auth/host/open",
             params=params,
             headers=headers,
             follow_redirects=False,
         )
+        logger.debug(f"/auth/host/open 请求响应体：{response.text}")
         logger.debug(f"/auth/host/open 请求响应头：{response.headers}")
         try:
             return (
@@ -82,12 +126,12 @@ class eCard:
                 parse_qs(urlparse(response.headers["location"]).query)["orgId"][0],
             )
         except Exception as exc:
-            logger.error("获取 JSessionID 和 tid 失败")
+            logger.error("获取 JSESSIONID 和 tid 失败")
             raise ECardTokenException(
-                "获取 JSessionID 和 tid 失败, 通过 DEBUG 日志获得更多信息"
+                "获取 JSESSIONID 和 tid 失败, 通过 DEBUG 日志获得更多信息"
             ) from exc
 
-    def _get_ecard_access_token(self):
+    async def _get_ecard_access_token(self):
         """
         获取 ecard access token
         """
@@ -111,7 +155,7 @@ class eCard:
             "tid": self._tid,
         }
         logger.debug(headers)
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/auth/getToken",
             headers=headers,
             json=data,
@@ -130,6 +174,14 @@ class eCard:
     def get_default_room(self) -> str:
         """
         获取账户默认房间
+
+        :returns: 默认的房间
+        """
+        return sync_wrapper(self.get_default_room_async)()
+
+    async def get_default_room_async(self) -> str:
+        """
+        异步获取账户默认房间
 
         :returns: 默认的房间
         """
@@ -155,7 +207,7 @@ class eCard:
             "utilityType": "electric",
         }
 
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/config",
             headers=headers,
             json=data,
@@ -185,8 +237,25 @@ class eCard:
             - **msg** (str) – 服务端返回信息。
         :rtype: Tuple[bool,str]
         """
+        return sync_wrapper(self.recharge_energy_async)(payment_password, amt, room)
+
+    async def recharge_energy_async(
+        self, payment_password: str, amt: int, room: str | None = None
+    ) -> Tuple[bool, str]:
+        """
+        异步为 room 充值电费
+
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :param str payment_password: 支付密码
+        :param int amt: 充值金额
+        :returns: Tuple[bool, str]
+
+            - **success** (bool) – 充值是否成功
+            - **msg** (str) – 服务端返回信息。
+        :rtype: Tuple[bool,str]
+        """
         check_permission(self._parent)
-        room = self.get_default_room() if room is None else room
+        room = await self.get_default_room_async() if room is None else room
 
         headers = {
             "Accept": "*/*",
@@ -206,7 +275,7 @@ class eCard:
             "sec-ch-ua-mobile": "?0",
             "sec-ch-ua-platform": '"Windows"',
         }
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/auth/getEncrypt",
             headers=headers,
         )
@@ -238,7 +307,7 @@ class eCard:
         sm2 = gmalg.SM2(pk=bytes.fromhex(public_key))
         encrypted_params = sm2.encrypt(json_string.encode())
         data = {"id": pay_id, "params": (encrypted_params.hex())[2:]}
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/pay",
             headers=headers,
             json=data,
@@ -251,6 +320,15 @@ class eCard:
     def get_balance(self) -> float:
         """
         获取校园卡余额
+
+        :return: 校园卡余额
+        :rtype: float
+        """
+        return sync_wrapper(self.get_balance_async)()
+
+    async def get_balance_async(self) -> float:
+        """
+        异步获取校园卡余额
 
         :return: 校园卡余额
         :rtype: float
@@ -270,7 +348,7 @@ class eCard:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        response = self._parent._client.get(
+        response = await self._parent._client.get(
             "https://info.s.zzu.edu.cn/portal-api/v1/thrid-adapter/get-person-info-card-list",
             headers=headers,
         )
@@ -284,7 +362,16 @@ class eCard:
         :return: 对应的字典
         :rtype: dict
         """
+        return sync_wrapper(self.get_room_dict_async)(id)
 
+    async def get_room_dict_async(self, id: str) -> dict:
+        """
+        异步获取房间的字典
+
+        :param str id: 已知房间 ID 。例如: '', '99', '99-12', '99-12--33'
+        :return: 对应的字典
+        :rtype: dict
+        """
         check_permission(self._parent)
         num = id.count("-")
         if num == 0 and id == "":
@@ -334,7 +421,7 @@ class eCard:
             "subArea": "",
         }
 
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/location",
             headers=headers,
             json=data,
@@ -354,9 +441,18 @@ class eCard:
         :return: 剩余能源
         :rtype: float
         """
+        return sync_wrapper(self.get_remaining_energy_async)(room)
 
+    async def get_remaining_energy_async(self, room: str | None = None) -> float:
+        """
+        异步获取剩余电量
+
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :return: 剩余能源
+        :rtype: float
+        """
         check_permission(self._parent)
-        room = self.get_default_room() if room is None else room
+        room = await self.get_default_room_async() if room is None else room
 
         headers = {
             "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
@@ -386,7 +482,7 @@ class eCard:
             "subArea": "",
         }
 
-        response = self._parent._client.post(
+        response = await self._parent._client.post(
             "https://ecard.v.zzu.edu.cn/server/utilities/account",
             headers=headers,
             json=data,
@@ -435,3 +531,56 @@ class eCard:
             DeprecationWarning,
         )
         return self.recharge_energy(payment_password, amt, room)
+
+    async def recharge_electricity_async(
+        self, payment_password: str, amt: int, room: str | None = None
+    ) -> Tuple[bool, str]:
+        """
+        异步为 room 充值电费
+
+        已被废弃，请使用 recharge_energy_async()
+
+        :param str room: 房间 ID 。格式应为 'areaid-buildingid--unitid-roomid'，可通过 get_room_dict() 获取
+        :param str payment_password: 支付密码
+        :param int amt: 充值金额
+        :returns: Tuple[bool, str]
+
+            - **success** (bool) – 充值是否成功
+            - **msg** (str) – 服务端返回信息。
+        :rtype: Tuple[bool,str]
+        """
+        logger.warning(
+            "recharge_electricity_async() 已废弃，请使用 recharge_energy_async()"
+        )
+        warnings.warn(
+            "recharge_electricity_async() is deprecated, please use recharge_energy_async()",
+            DeprecationWarning,
+        )
+        return await self.recharge_energy_async(payment_password, amt, room)
+
+    async def _start_token_refresh_async(self):
+        """
+        异步启动 token 刷新
+        """
+        self._JSessionID, self._tid, self._orgId = await self._get_jsession_id()
+        (
+            self._eCardAccessToken,
+            self._eCardRefreshToken,
+        ) = await self._get_ecard_access_token()
+
+        # 每 45 分钟（2700 秒）执行一次
+        self._timer = threading.Timer(2700, self._start_token_refresh_timer)
+        self._timer.daemon = True
+        self._timer.start()
+
+    async def start_token_refresh_loop(self):
+        """
+        启动异步的 token 刷新循环
+        """
+        import asyncio
+
+        while True:
+            # 刷新 token
+            await self._start_token_refresh_async()
+            # 等待 45 分钟（2700 秒）
+            await asyncio.sleep(2700)
