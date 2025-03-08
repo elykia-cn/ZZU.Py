@@ -4,13 +4,12 @@ import time
 import httpx
 import re
 import json
-import asyncio
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
-from typing import Dict, List, Optional, Tuple, Union, Any
-from functools import wraps
+from typing import List, Tuple
 
 from zzupy.utils import get_ip_by_interface, get_default_interface, sync_wrapper
+from zzupy.models import OnlineDevices, OnlineDevice
 
 
 class Network:
@@ -346,21 +345,21 @@ class Network:
             print(f"登录失败: {str(e)}")
             return False
 
-    def get_online_devices(self) -> List[Dict[str, Any]]:
+    def get_online_devices(self) -> "OnlineDevices":
         """
         获取全部在线设备
 
         :return: 在线设备列表
-        :rtype: List[Dict[str, Any]]
+        :rtype: OnlineDevices
         """
         return sync_wrapper(self.get_online_devices_async)()
 
-    async def get_online_devices_async(self) -> List[Dict[str, Any]]:
+    async def get_online_devices_async(self) -> "OnlineDevices":
         """
         异步获取全部在线设备
 
         :return: 在线设备列表
-        :rtype: List[Dict[str, Any]]
+        :rtype: OnlineDevices
         """
         cookies = {"JSESSIONID": self._JSessionID}
         headers = {
@@ -388,10 +387,10 @@ class Network:
                 )
 
                 if response.status_code == 200:
-                    return json.loads(response.text)
-                return []
+                    return OnlineDevices.from_list(json.loads(response.text))
+                return OnlineDevices()
         except Exception:
-            return []
+            return OnlineDevices()
 
     def get_total_traffic(self) -> int:
         """

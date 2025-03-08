@@ -3,12 +3,12 @@ import httpx
 import json
 import base64
 import time
-from typing import Optional, TypedDict, Final
+from typing import Optional, TypedDict, Final, Dict, Any
 from typing_extensions import Unpack
 from http.cookies import SimpleCookie
 from loguru import logger
 
-from zzupy.typing import DeviceParams
+from zzupy.models import DeviceParams
 from zzupy.utils import get_sign, _kget, sync_wrapper
 from zzupy.supwisdom import Supwisdom
 from zzupy.ecard import eCard
@@ -45,13 +45,13 @@ class ZZUPy:
         self._refreshToken: str = ""
         self._name: str = ""
         self._isLogged: bool = False
-        self._DeviceParams: DeviceParams = {
-            "deviceName": "",
-            "deviceId": "",
-            "deviceInfo": "",
-            "deviceInfos": "",
-            "userAgentPrecursor": "",
-        }
+        self._DeviceParams = DeviceParams(
+            deviceName="",
+            deviceId="",
+            deviceInfo="",
+            deviceInfos="",
+            userAgentPrecursor="",
+        )
         self._usercode: str = usercode
         self._password: str = password
 
@@ -90,7 +90,7 @@ class ZZUPy:
         """判断是否已登录"""
         return self._isLogged
 
-    def set_device_params(self, **kwargs: Unpack[DeviceParams]) -> None:
+    def set_device_params(self, **kwargs: Unpack[Dict[str, Any]]) -> None:
         """
         设置设备参数。这些参数都需要抓包获取，但其实可有可无，因为目前并没有观察到相关风控机制
 
@@ -107,12 +107,11 @@ class ZZUPy:
             "deviceInfos",
             "userAgentPrecursor",
         ):
-            # noinspection PyTypedDict
-            self._DeviceParams[key] = _kget(kwargs, key, "")
+            setattr(self._DeviceParams, key, _kget(kwargs, key, ""))
 
         # 处理 userAgentPrecursor 的尾部空格
-        if not self._DeviceParams["userAgentPrecursor"].endswith(" "):
-            self._DeviceParams["userAgentPrecursor"] += " "
+        if not self._DeviceParams.userAgentPrecursor.endswith(" "):
+            self._DeviceParams.userAgentPrecursor += " "
 
         logger.info("已配置设备参数")
 
@@ -178,7 +177,7 @@ class ZZUPy:
     ) -> None:
         """执行密码登录流程"""
         headers = {
-            "User-Agent": f"{app_version}({self._DeviceParams['deviceName']})",
+            "User-Agent": f"{app_version}({self._DeviceParams.deviceName})",
             "Connection": "Keep-Alive",
             "Accept-Encoding": "gzip",
         }
@@ -190,7 +189,7 @@ class ZZUPy:
                 "password": self._password,
                 "appId": app_id,
                 "geo": "",
-                "deviceId": self._DeviceParams["deviceId"],
+                "deviceId": self._DeviceParams.deviceId,
                 "osType": os_type,
                 "clientId": "",
                 "mfaState": "",
@@ -212,7 +211,7 @@ class ZZUPy:
     async def _token_login(self) -> None:
         """执行 token 登录流程"""
         headers = {
-            "User-Agent": f"{self._DeviceParams['userAgentPrecursor']}SuperApp",
+            "User-Agent": f"{self._DeviceParams.userAgentPrecursor}SuperApp",
             "Accept": "application/json, text/plain, */*",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Content-Type": "application/x-www-form-urlencoded",

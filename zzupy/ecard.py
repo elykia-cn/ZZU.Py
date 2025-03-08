@@ -88,7 +88,7 @@ class eCard:
         :raises ECardTokenException: 获取 JSESSIONID, tid 或 orgId 失败时抛出
         """
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor + "SuperApp",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "sec-ch-ua": '"Android WebView";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
@@ -136,7 +136,7 @@ class eCard:
         获取 ecard access token
         """
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Content-Type": "application/json",
             "sec-ch-ua-platform": '"Android"',
@@ -188,7 +188,7 @@ class eCard:
         check_permission(self._parent)
         logger.debug("尝试获取默认 room")
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor + "SuperApp",
             "Content-Type": "application/json",
             "sec-ch-ua-platform": '"Android"',
             "Authorization": self._eCardAccessToken,
@@ -336,13 +336,13 @@ class eCard:
         check_permission(self._parent)
 
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"]
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor
             + "uni-app Html5Plus/1.0 (Immersed/38.666668)",
             "Connection": "Keep-Alive",
             "Accept": "application/json",
             "Accept-Encoding": "gzip",
-            "X-Device-Info": self._parent._DeviceParams["deviceInfo"],
-            "X-Device-Infos": self._parent._DeviceParams["deviceInfos"],
+            "X-Device-Info": self._parent._DeviceParams.deviceInfo,
+            "X-Device-Infos": self._parent._DeviceParams.deviceInfos,
             "X-Id-Token": self._parent._userToken,
             "X-Terminal-Info": "app",
             "Content-Type": "application/x-www-form-urlencoded",
@@ -393,7 +393,7 @@ class eCard:
             raise ValueError("参数不合法")
 
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Content-Type": "application/json",
             "sec-ch-ua-platform": '"Android"',
@@ -455,7 +455,7 @@ class eCard:
         room = await self.get_default_room_async() if room is None else room
 
         headers = {
-            "User-Agent": self._parent._DeviceParams["userAgentPrecursor"] + "SuperApp",
+            "User-Agent": self._parent._DeviceParams.userAgentPrecursor + "SuperApp",
             "Accept-Encoding": "gzip, deflate, br, zstd",
             "Content-Type": "application/json",
             "sec-ch-ua-platform": '"Android"',
