@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 from typing import List, Tuple
 
 from zzupy.utils import get_ip_by_interface, get_default_interface, sync_wrapper
-from zzupy.models import OnlineDevices, OnlineDevice
+from zzupy.models import OnlineDevices
 
 
 class Network:
