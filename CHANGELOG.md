@@ -1,14 +1,67 @@
 # CHANGELOG
 
 
-## v3.0.0 (2025-03-05)
+## v4.0.0 (2025-03-08)
+
+### Bug Fixes
+
+- Allow specifying semester_id for get_courses()
+  ([`faa0388`](https://github.com/Illustar0/ZZU.Py/commit/faa0388a663a676fa985b65c50e11d5418ff626d))
+
+In fact, the semester_id is different for each semester, which means that get_courses() can only get
+  the course schedule for the first semester of the 2024-2025 academic year. This commit fixes this
+  problem.
+
+BREAKING CHANGE: get_courses() required parameters changed
+
+get_courses() now requires two parameters: start_date and semester_id
+
+- Remove useless imports
+  ([`d0fa47a`](https://github.com/Illustar0/ZZU.Py/commit/d0fa47a0874e00b4849328c844cc7d071e623337))
 
 ### Documentation
+
+- Modify the comment format
+  ([`0509e3f`](https://github.com/Illustar0/ZZU.Py/commit/0509e3f18722e2908fef11e9b3eea71a6761b7fe))
+
+- Update README.md
+  ([`71ced68`](https://github.com/Illustar0/ZZU.Py/commit/71ced688c89293c96e6ca1aaebcd50de4eb773ec))
+
+### Features
+
+- Allows obtaining userToken via public API
+  ([`aff8a3c`](https://github.com/Illustar0/ZZU.Py/commit/aff8a3c93f2e4d4e7bd55c7c019b5c44a7f07b44))
+
+- Make login() return a dictionary
+  ([`5c6963c`](https://github.com/Illustar0/ZZU.Py/commit/5c6963ca2c4334effe9be513961b5cd0fbb29de9))
+
+login() now returns a dictionary instead of a tuple
+
+BREAKING CHANGE: login() return value changed
+
+- Use pydantic to provide type annotations
+  ([`e02d25c`](https://github.com/Illustar0/ZZU.Py/commit/e02d25c6f90e820e51a6be6cf746f84a69bfcf5f))
+
+
+## v3.0.0 (2025-03-05)
+
+### Bug Fixes
+
+- Type hint error
+  ([`86f2e23`](https://github.com/Illustar0/ZZU.Py/commit/86f2e2336ab45c41d78b6061753c05c06cb32829))
+
+### Documentation
+
+- Complete documentation for some internal functions
+  ([`6552735`](https://github.com/Illustar0/ZZU.Py/commit/655273564b03b9d0bc8b3b89372d74b9f210fcdf))
 
 - Correct and complete some documents
   ([`220f1da`](https://github.com/Illustar0/ZZU.Py/commit/220f1daacb9d4c3c559c3cc612fefa238428cd23))
 
 ### Features
+
+- Introducing support for async io
+  ([`87fb608`](https://github.com/Illustar0/ZZU.Py/commit/87fb6080df89bcef60eb2b66a274fcc868cd9f81))
 
 - Use SimpleCookie as the incoming type
   ([`286be07`](https://github.com/Illustar0/ZZU.Py/commit/286be07343b08b671797bd3c9397616ad49b850f))
@@ -18,10 +71,6 @@ It is obvious that SimpleCookie is a more suitable parameter type than dict.
 BREAKING CHANGE: no longer accepting dict type cookies
 
 Please use SimpleCookie
-
-### Breaking Changes
-
-- No longer accepting dict type cookies
 
 
 ## v2.1.0 (2025-03-03)
