@@ -8,8 +8,17 @@ pip install zzupy --upgrade
 ```
 
 ## Done & To Do
+- [x] API
+  - [x] 登录
+    - [x] 帐密登录
+    - [x] Cookie 登录
+
 - [x] Supwisdom
   - [x] 获取课表
+    - [x] 获取当日课表
+    - [x] 获取当周课表
+    - [x] 获取自定义周数课表
+
 - [x] Network
   - [x] 校园网认证 
     - [x] 校园网
@@ -18,6 +27,7 @@ pip install zzupy --upgrade
   - [x] 获取消耗流量
   - [x] 获取使用时长
   - [x] 注销设备
+
 - [x] eCard
   - [x] 充值电费 
   - [x] 获取校园卡余额
@@ -36,17 +46,21 @@ pip install zzupy --upgrade
 
 ```Py
 from zzupy import ZZUPy
-
-me = ZZUPy("usercode","password")
+from http.cookies import SimpleCookie
+cookie = SimpleCookie()
+cookie["userToken"] = "Your userToken"
+cookie["userToken"]["domain"] = ".zzu.edu.cn"
+cookie["userToken"]["path"] = "/"
+me = ZZUPy("usercode","password", cookie)
 info = me.login()
-print(f"{info[0]} {info[1]} 登录成功")
+print(f"{info["usercode"]} {info["name"]} 登录成功")
 print("校园卡余额：", str(me.eCard.get_balance()))
-print("剩余电费：", str(me.eCard.get_remaining_power("roomid")))
-print("课表JSON：", me.Supwisdom.get_courses("2024-12-09"))
+print("剩余电费：", str(me.eCard.get_remaining_energy()))
+print("课表JSON：", me.Supwisdom.get_current_week_courses("172").dump_json())
 me.Network.login()
-print(me.Network.get_online_devices())
+print(me.Network.get_online_devices().dump_json())
 ```
 
 ## 许可
 
-License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)
+MIT license
