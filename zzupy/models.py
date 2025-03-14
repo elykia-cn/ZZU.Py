@@ -114,7 +114,7 @@ class DeviceParams(BaseModel):
     """设备名称"""
     deviceId: str
     """设备ID"""
-    deviceInfo: str  
+    deviceInfo: str
     """设备信息"""
     deviceInfos: str
     """设备详细信息"""
