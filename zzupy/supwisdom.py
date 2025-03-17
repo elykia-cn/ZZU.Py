@@ -7,7 +7,7 @@ import httpx
 from loguru import logger
 
 from zzupy.utils import get_sign, sync_wrapper
-from zzupy.models import Courses
+from zzupy.models import Courses, RoomOccupancyData
 
 
 class Supwisdom:
@@ -98,7 +98,7 @@ class Supwisdom:
             self._parent._DeviceParams.userAgentPrecursor + "SuperApp"
         )
         headers["token"] = self._parent._dynamicToken
-
+        response = None
         try:
             # 发送请求
             response = await self._parent._client.post(
@@ -138,7 +138,9 @@ class Supwisdom:
         except httpx.RequestError as e:
             raise Exception(f"网络请求失败: {str(e)}")
         except json.JSONDecodeError as e:
-            raise Exception(f"解析响应JSON失败: {response.text}")
+            # 检查response是否已定义
+            error_text = response.text if response is not None else "无响应内容"
+            raise Exception(f"解析响应JSON失败: {error_text}")
         except Exception as e:
             raise Exception(f"获取课程表失败: {str(e)}")
 
@@ -217,3 +219,73 @@ class Supwisdom:
         ]
 
         return Courses(courses=today_courses)
+
+    def get_room_data(
+        self,
+        building_id: int | str,
+        date_str: str = datetime.datetime.now().strftime("%Y-%m-%d"),
+    ) -> RoomOccupancyData:
+        """
+        获取教室占用数据
+
+        :param building_id: 建筑ID
+        :param date_str: 日期字符串，格式为YYYY-MM-DD，默认为当天
+        :return: 返回教室占用数据
+        :rtype: RoomOccupancyData
+        :raises Exception: 如果API请求失败
+        """
+        return sync_wrapper(self.get_room_data_async)(building_id, date_str)
+
+    async def get_room_data_async(
+        self,
+        building_id: int | str,
+        date_str: str = datetime.datetime.now().strftime("%Y-%m-%d"),
+    ) -> RoomOccupancyData:
+        """
+        异步获取教室占用数据
+
+        :param building_id: 建筑ID
+        :param date_str: 日期字符串，格式为YYYY-MM-DD，默认为当天
+        :return: 返回教室占用数据
+        :rtype: RoomOccupancyData
+        :raises Exception: 如果API请求失败
+        """
+        data = {
+            "building_id": building_id,
+            "start_date": date_str,
+            "end_date": None,
+            "token": self._parent._userToken,
+            "timestamp": int(round(time.time() * 1000)),
+        }
+        # 在try块外初始化response变量为None
+        response = None
+        try:
+            headers = self._default_headers.copy()
+            headers["User-Agent"] = (
+                self._parent._DeviceParams.userAgentPrecursor + "SuperApp"
+            )
+            headers["token"] = self._parent._dynamicToken
+            response = await self._parent._client.post(
+                "https://jw.v.zzu.edu.cn/app-ws/ws/app-service/room/borrow/occupancy/search",
+                headers=headers,
+                data=data,
+            )
+            response.raise_for_status()
+
+            # 解析响应数据
+            business_data = json.loads(
+                base64.b64decode(response.json()["business_data"])
+            )
+            return RoomOccupancyData(**business_data[0])
+
+        except httpx.HTTPStatusError as e:
+            raise Exception(f"API请求失败: HTTP {e.response.status_code}")
+        except httpx.RequestError as e:
+            raise Exception(f"网络请求失败: {str(e)}")
+        except json.JSONDecodeError as e:
+            # 检查response是否已定义
+            error_text = response.text if response is not None else "无响应内容"
+            raise Exception(f"解析响应JSON失败: {error_text}")
+        except Exception as e:
+            logger.error(f"获取教室占用数据失败: {e}")
+            raise

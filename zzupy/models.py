@@ -181,3 +181,76 @@ class OnlineDevices(BaseModel):
             ensure_ascii=False,
             indent=indent,
         )
+
+
+class RoomOccupancy(BaseModel):
+    """教室占用信息模型"""
+
+    building_code: str
+    """建筑代码"""
+    building_name: str
+    """建筑名称"""
+    campus_code: str
+    """校区代码"""
+    campus_name: str
+    """校区名称"""
+    floor: str
+    """楼层"""
+    occupy_units: str
+    """占用单元，字符串形式的二进制表示（1表示占用，0表示空闲）"""
+    room_capacity: int
+    """教室容量"""
+    room_code: str
+    """教室代码"""
+    room_id: str
+    """教室ID"""
+    room_name: str
+    """教室名称"""
+    room_type: str
+    """教室类型"""
+
+
+class RoomOccupancyData(BaseModel):
+    """教室占用数据模型"""
+
+    date: str
+    """日期，格式为YYYY-MM-DD"""
+    max_unit: int
+    """最大单元数（一天中的时间段总数）"""
+    rooms: List[RoomOccupancy]
+    """教室占用信息列表"""
+
+    def __len__(self) -> int:
+        return len(self.rooms)
+
+    def __getitem__(self, index):
+        return self.rooms[index]
+
+    def __iter__(self):
+        return iter(self.rooms)
+
+    def dump_json(self, indent: Optional[int] = None) -> str:
+        """格式化为JSON字符串"""
+        return json.dumps(self.model_dump(), ensure_ascii=False, indent=indent)
+
+    def get_available_rooms(self, unit_index: int) -> List[RoomOccupancy]:
+        """获取指定时间单元可用的教室列表
+
+        :param unit_index: 时间单元索引（从1开始）
+        :return: 可用教室列表
+        :rtype: List[RoomOccupancy]
+        :raises ValueError: 如果时间单元索引超出范围
+        """
+        if unit_index < 1 or unit_index > self.max_unit:
+            raise ValueError(f"时间单元索引必须在1到{self.max_unit}之间")
+
+        available_rooms = []
+        for room in self.rooms:
+            # 检查对应位置的字符是否为'0'（表示空闲）
+            if (
+                unit_index < len(room.occupy_units)
+                and room.occupy_units[unit_index - 1] == "0"
+            ):
+                available_rooms.append(room)
+
+        return available_rooms
