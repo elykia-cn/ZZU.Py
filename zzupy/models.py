@@ -254,3 +254,50 @@ class RoomOccupancyData(BaseModel):
                 available_rooms.append(room)
 
         return available_rooms
+
+
+class Semester(BaseModel):
+    """学期模型"""
+
+    code: str
+    """学期号"""
+    end_date: str
+    """学期结束日期"""
+    id: str
+    """学期 ID"""
+    name: str
+    """学期名"""
+    season: str
+    """学期季节"""
+    start_date: str
+    """学期开始日期"""
+    week_start_day: int
+    """学期周起始日"""
+    year: str
+    """学期年份"""
+
+    def dump_json(self, indent: Optional[int] = None) -> str:
+        """格式化为JSON字符串"""
+        return json.dumps(self.model_dump(), ensure_ascii=False, indent=indent)
+
+
+class SemesterData(BaseModel):
+    """学期数据模型"""
+
+    cur_semester_id: int
+    """默认学期ID"""
+    semesters: List[Semester]
+    """学期列表"""
+
+    def __len__(self) -> int:
+        return len(self.semesters)
+
+    def __getitem__(self, index):
+        return self.semesters[index]
+
+    def __iter__(self):
+        return iter(self.semesters)
+
+    def dump_json(self, indent: Optional[int] = None) -> str:
+        """格式化为JSON字符串"""
+        return json.dumps(self.model_dump(), ensure_ascii=False, indent=indent)

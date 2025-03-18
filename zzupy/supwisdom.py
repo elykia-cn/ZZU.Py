@@ -7,7 +7,7 @@ import httpx
 from loguru import logger
 
 from zzupy.utils import get_sign, sync_wrapper
-from zzupy.models import Courses, RoomOccupancyData
+from zzupy.models import Courses, RoomOccupancyData, SemesterData
 
 
 class Supwisdom:
@@ -288,4 +288,54 @@ class Supwisdom:
             raise Exception(f"解析响应JSON失败: {error_text}")
         except Exception as e:
             logger.error(f"获取教室占用数据失败: {e}")
+            raise
+
+    def get_semester_data(self, biz_type_id: str | int = "1") -> SemesterData:
+        """
+        获取学期数据
+
+        :param biz_type_id: 本科生为 1
+        :return: 返回学期数据
+        :rtype: SemesterData
+        :raises Exception: 如果API请求失败
+        """
+        return sync_wrapper(self.get_semester_data_async)(biz_type_id)
+
+    async def get_semester_data_async(self, biz_type_id: str | int) -> SemesterData:
+        """Return semesters details from 1997, contains start date, end date, season, id, etc."""
+        data = {
+            "biz_type_id": str(biz_type_id),  # '1' 代表本科生
+            "timestamp": int(round(time.time() * 1000)),
+            "token": self._parent._dynamicToken,
+        }
+        response = None
+        try:
+            headers = self._default_headers.copy()
+            headers["User-Agent"] = (
+                self._parent._DeviceParams.userAgentPrecursor + "SuperApp"
+            )
+            headers["token"] = self._parent._dynamicToken
+            response = await self._parent._client.post(
+                "https://jw.v.zzu.edu.cn/app-ws/ws/app-service/common/get-semester",
+                headers=headers,
+                data=data,
+            )
+            response.raise_for_status()
+
+            # 解析响应数据
+            business_data = json.loads(
+                base64.b64decode(response.json()["business_data"])
+            )
+            return SemesterData(**business_data)
+
+        except httpx.HTTPStatusError as e:
+            raise Exception(f"API请求失败: HTTP {e.response.status_code}")
+        except httpx.RequestError as e:
+            raise Exception(f"网络请求失败: {str(e)}")
+        except json.JSONDecodeError as e:
+            # 检查response是否已定义
+            error_text = response.text if response is not None else "无响应内容"
+            raise Exception(f"解析响应JSON失败: {error_text}")
+        except Exception as e:
+            logger.error(f"获取学期数据失败: {e}")
             raise
