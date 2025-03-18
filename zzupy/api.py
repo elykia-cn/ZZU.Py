@@ -254,9 +254,19 @@ class ZZUPy:
             self._dynamicSecret = business_data["secret"]
             self._dynamicToken = business_data["token"]
             self._name = business_data["user_info"]["user_name"]
+            self.Supwisdom.biz_type_id = business_data["user_info"]["biz_type_infos"][
+                0
+            ]["id"]
         except Exception as exc:
             logger.error("从 /login-token 请求中提取数据失败")
             raise LoginException("登录失败，请查看 DEBUG 日志获取详细信息") from exc
+        try:
+            self.Supwisdom.current_semester_id = (
+                await self.Supwisdom.get_semester_data_async(self.Supwisdom.biz_type_id)
+            ).cur_semester_id
+        except Exception as exc:
+            logger.error("获取默认学期失败")
+            raise LoginException("获取默认学期失败") from exc
 
     def get_user_token(self) -> str:
         """获取本次会话的 userToken"""

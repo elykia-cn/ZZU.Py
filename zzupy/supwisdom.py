@@ -39,31 +39,40 @@ class Supwisdom:
             "Referer": "https://jw.v.zzu.edu.cn/app-web/",
             "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
         }
+        self.biz_type_id = None
+        self.current_semester_id = None
 
-    def get_courses(self, start_date: str, semester_id: str) -> Courses:
+    def get_courses(self, start_date: str, semester_id: str | int = None,biz_type_id: str | int = None) -> Courses:
         """
         获取课程表
 
         :param str start_date: 课表的开始日期，格式必须为 YYYY-MM-DD ，且必须为某一周周一，否则课表会时间错乱
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回课程表数据
         :rtype: Courses
         :raises ValueError: 如果日期格式不正确
         :raises Exception: 如果API请求失败
         """
-        return sync_wrapper(self.get_courses_async)(start_date, semester_id)
+        return sync_wrapper(self.get_courses_async)(start_date, semester_id,biz_type_id)
 
-    async def get_courses_async(self, start_date: str, semester_id: str) -> Courses:
+    async def get_courses_async(self, start_date: str, semester_id: str | int = None, biz_type_id: str | int = None) -> Courses:
         """
         异步获取课程表
 
         :param str start_date: 课表的开始日期，格式必须为 YYYY-MM-DD ，且必须为某一周周一，否则课表会时间错乱
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回课程表数据
         :rtype: Courses
         :raises ValueError: 如果日期格式不正确
         :raises Exception: 如果API请求失败
         """
+
+        if semester_id is None:
+            semester_id = self.current_semester_id
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         # 验证日期格式
         try:
             start_datetime = datetime.datetime.strptime(start_date, "%Y-%m-%d")
@@ -78,10 +87,10 @@ class Supwisdom:
 
         # 准备请求数据
         data = {
-            "biz_type_id": "1",
+            "biz_type_id": str(biz_type_id),
             "end_date": end_date,
             "random": int(random.uniform(10000, 99999)),
-            "semester_id": semester_id,
+            "semester_id": str(semester_id),
             "start_date": start_date,
             "timestamp": int(round(time.time() * 1000)),
             "token": self._parent._userToken,
@@ -144,14 +153,20 @@ class Supwisdom:
         except Exception as e:
             raise Exception(f"获取课程表失败: {str(e)}")
 
-    def get_current_week_courses(self, semester_id: str) -> Courses:
+    def get_current_week_courses(self, semester_id: str | int = None, biz_type_id: str | int = None) -> Courses:
         """
         获取本周课程表
 
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回本周课程表数据
         :rtype: Courses
         """
+
+        if semester_id is None:
+            semester_id = self.current_semester_id
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         # 获取当前日期
         today = datetime.datetime.now()
         # 计算本周一的日期
@@ -159,16 +174,21 @@ class Supwisdom:
         # 格式化为YYYY-MM-DD
         monday_str = monday.strftime("%Y-%m-%d")
         # 获取课程表
-        return self.get_courses(monday_str, semester_id)
+        return self.get_courses(monday_str, semester_id,biz_type_id)
 
-    async def get_current_week_courses_async(self, semester_id: str) -> Courses:
+    async def get_current_week_courses_async(self, semester_id: str | int = None, biz_type_id: str | int = None) -> Courses:
         """
         异步获取本周课程表
 
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID。
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回本周课程表数据
         :rtype: Courses
         """
+        if semester_id is None:
+            semester_id = self.current_semester_id
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         # 获取当前日期
         today = datetime.datetime.now()
         # 计算本周一的日期
@@ -176,18 +196,24 @@ class Supwisdom:
         # 格式化为YYYY-MM-DD
         monday_str = monday.strftime("%Y-%m-%d")
         # 获取课程表
-        return await self.get_courses_async(monday_str, semester_id)
+        return await self.get_courses_async(monday_str, semester_id,biz_type_id)
 
-    def get_today_courses(self, semester_id: str) -> Courses:
+    def get_today_courses(self, semester_id: str | int = None, biz_type_id: str | int = None) -> Courses:
         """
         获取今日课程表
 
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回今日课程表数据
         :rtype: Courses
         """
+
+        if semester_id is None:
+            semester_id = self.current_semester_id
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         # 获取本周课程表
-        week_courses = self.get_current_week_courses(semester_id)
+        week_courses = self.get_current_week_courses(semester_id,biz_type_id)
 
         # 获取今天的日期
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -199,16 +225,21 @@ class Supwisdom:
 
         return Courses(courses=today_courses)
 
-    async def get_today_courses_async(self, semester_id: str) -> Courses:
+    async def get_today_courses_async(self, semester_id: str | int = None, biz_type_id: str | int = None) -> Courses:
         """
         异步获取今日课程表
 
-        :param str semester_id: 学期ID, 抓包获取。
+        :param str semester_id: 学期ID
+        :param str biz_type_id: 业务类型 ID，用于区分本科生和研究生
         :return: 返回今日课程表数据
         :rtype: Courses
         """
+        if semester_id is None:
+            semester_id = self.current_semester_id
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         # 获取本周课程表
-        week_courses = await self.get_current_week_courses_async(semester_id)
+        week_courses = await self.get_current_week_courses_async(semester_id,biz_type_id)
 
         # 获取今天的日期
         today_str = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -290,19 +321,28 @@ class Supwisdom:
             logger.error(f"获取教室占用数据失败: {e}")
             raise
 
-    def get_semester_data(self, biz_type_id: str | int = "1") -> SemesterData:
+    def get_semester_data(self, biz_type_id: str | int = None) -> SemesterData:
         """
         获取学期数据
 
-        :param biz_type_id: 本科生为 1
+        :param biz_type_id: 业务类型 ID，用于区分本科生和研究生。
         :return: 返回学期数据
         :rtype: SemesterData
         :raises Exception: 如果API请求失败
         """
         return sync_wrapper(self.get_semester_data_async)(biz_type_id)
 
-    async def get_semester_data_async(self, biz_type_id: str | int) -> SemesterData:
-        """Return semesters details from 1997, contains start date, end date, season, id, etc."""
+    async def get_semester_data_async(self, biz_type_id: str | int = None) -> SemesterData:
+        """
+        异步获取学期数据
+
+        :param biz_type_id: 业务类型 ID，用于区分本科生和研究生。
+        :return: 返回学期数据
+        :rtype: SemesterData
+        :raises Exception: 如果API请求失败
+        """
+        if biz_type_id is None:
+            biz_type_id = self.biz_type_id
         data = {
             "biz_type_id": str(biz_type_id),  # '1' 代表本科生
             "timestamp": int(round(time.time() * 1000)),
@@ -339,3 +379,23 @@ class Supwisdom:
         except Exception as e:
             logger.error(f"获取学期数据失败: {e}")
             raise
+
+    def get_biz_type_id(
+        self,
+    ) -> int:
+        """
+        获取账户默认业务类型 ID，用于区分本科生和研究生。
+
+        :return: 返回默认业务类型 ID
+        :rtype: int
+        """
+        return self.biz_type_id
+
+    def get_current_semester_id(self)-> int:
+        """
+        获取默认学期 ID
+
+        :return: 返回学期 ID
+        :rtype: int
+        """
+        return self.current_semester_id
