@@ -1,6 +1,48 @@
 # CHANGELOG
 
 
+## v4.1.0 (2025-03-18)
+
+### Bug Fixes
+
+- Corrected some error request bodies
+  ([`e003214`](https://github.com/Illustar0/ZZU.Py/commit/e003214b7109db987d018b9e18c13ca3cb8d5408))
+
+### Documentation
+
+- Add credits
+  ([`440f50c`](https://github.com/Illustar0/ZZU.Py/commit/440f50c2a1b8762e90e604f4af63eee93ba6dedf))
+
+- Add models.rst
+  ([`9658a97`](https://github.com/Illustar0/ZZU.Py/commit/9658a97153ab8bec101288b3f28020162481d782))
+
+- Enable sphinx to parse pydantic models
+  ([`b79e726`](https://github.com/Illustar0/ZZU.Py/commit/b79e72685b7ac08a4d68c1b59b5793b981c77b53))
+
+- Update features
+  ([`2a28eba`](https://github.com/Illustar0/ZZU.Py/commit/2a28eba2a94957dd7556b37c5c82eeb35e1c22d1))
+
+### Features
+
+- Automatically obtain cur_semester_id and biz_type_id and use them as default values
+  ([`5b7c6e3`](https://github.com/Illustar0/ZZU.Py/commit/5b7c6e3bfffa0f98fcdbd5e3ed0774151ccd860e))
+
+- Support obtain semester data
+  ([`1c1e223`](https://github.com/Illustar0/ZZU.Py/commit/1c1e223ca1a71ea2c5cd24d39cb369579d6c2241))
+
+- Support query of empty classrooms
+  ([`f05ef9b`](https://github.com/Illustar0/ZZU.Py/commit/f05ef9b1c7e331e336f2eac4864a6cd40028d30d))
+
+Allows to query empty classrooms by date and building id
+
+Closes #9
+
+### Refactoring
+
+- Format code
+  ([`daffc76`](https://github.com/Illustar0/ZZU.Py/commit/daffc764da425dbbf0ba4530b3b3266de173c44e))
+
+
 ## v4.0.0 (2025-03-08)
 
 ### Bug Fixes
