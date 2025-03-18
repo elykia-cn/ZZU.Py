@@ -93,7 +93,7 @@ class Supwisdom:
             "semester_id": str(semester_id),
             "start_date": start_date,
             "timestamp": int(round(time.time() * 1000)),
-            "token": self._parent._userToken,
+            "token": self._parent._dynamicToken ,
         }
 
         # 生成签名
@@ -284,10 +284,14 @@ class Supwisdom:
         data = {
             "building_id": building_id,
             "start_date": date_str,
+            "random": int(random.uniform(10000, 99999)),
             "end_date": None,
-            "token": self._parent._userToken,
+            "token": self._parent._dynamicToken,
             "timestamp": int(round(time.time() * 1000)),
         }
+        params = "&".join([f"{key}={value}" for key, value in data.items()])
+        sign = get_sign(self._parent._dynamicSecret, params)
+        data["sign"] = sign
         # 在try块外初始化response变量为None
         response = None
         try:
@@ -344,10 +348,14 @@ class Supwisdom:
         if biz_type_id is None:
             biz_type_id = self.biz_type_id
         data = {
-            "biz_type_id": str(biz_type_id),  # '1' 代表本科生
+            "biz_type_id": str(biz_type_id),
+            "random": int(random.uniform(10000, 99999)),# '1' 代表本科生
             "timestamp": int(round(time.time() * 1000)),
             "token": self._parent._dynamicToken,
         }
+        params = "&".join([f"{key}={value}" for key, value in data.items()])
+        sign = get_sign(self._parent._dynamicSecret, params)
+        data["sign"] = sign
         response = None
         try:
             headers = self._default_headers.copy()
