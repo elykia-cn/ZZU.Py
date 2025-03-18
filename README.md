@@ -17,6 +17,7 @@ pip install zzupy --upgrade
     - [x] 获取当日课表
     - [x] 获取当周课表
     - [x] 获取自定义周数课表
+  - [x] 获取空教室
 - [x] Network
   - [x] 校园网认证 
     - [x] 校园网
